@@ -3,10 +3,11 @@ set -e
 
 type cargo-get >/dev/null 2>&1 || { echo >&2 "cargo-get is not installed; aborting."; exit 1; }
 
+project="tinyrand"
 base_dir="$(dirname "$0")"
 cd ${base_dir}/..
 proj_dir=$(pwd)
-new_version=$(cd serbzip; cargo get version)
+new_version=$(cd $project; cargo get version)
 
 function await() {
   package=$1
@@ -36,8 +37,8 @@ function await() {
   done
 }
 
-echo "Publishing all packages for serbzip ${new_version}"
+echo "Publishing all packages for $project ${new_version}"
 
-cargo publish -p serbzip-core
-await serbzip-core
-cargo publish -p serbzip
+cargo publish -p tinyrand
+await tinyrand
+cargo publish -p tinyrand-std

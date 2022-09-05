@@ -2,7 +2,7 @@
 name = "tinyrand-std"
 version = "0.1.0"
 edition = "2021"
-readme = "../README.md"
+readme = "README.md"
 authors = ["Emil Koutanov"]
 license = "MIT"
 description = "Extensions for using tinyrand with stdlib."
