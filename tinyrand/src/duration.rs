@@ -1,3 +1,5 @@
+//! Extensions for generating random `Duration`s.
+
 use core::ops::Range;
 use core::time::Duration;
 use crate::{Rand, RandLim, RandRange};
