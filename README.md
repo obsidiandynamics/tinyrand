@@ -16,12 +16,12 @@ Lightweight RNG specification and several ultrafast implementations for Rust. `t
 # Performance
 Below is a comparison of several notable RNGs.
 
-| RNG        | Algorithm | Bandwidth (GB/s) |
-|:-----------|:----------|-----------------:|
-| `rand`     | ChaCha12  |              2.2 |
-| `fastrand` | Wyrand    |              5.1 |
-| `tinyrand` | Wyrand    |             14.6 |
-| `tinyrand` | Xorshift  |              6.7 |
+| RNG        | Algorithm | Bandwidth (GB/s) |                                                                                       |
+|:-----------|:----------|-----------------:|:--------------------------------------------------------------------------------------|
+| `rand`     | ChaCha12  |              2.2 | <img src="https://via.placeholder.com/12/FF5733/FF5733.png" width="22" height="12"/>  |
+| `fastrand` | Wyrand    |              5.1 | <img src="https://via.placeholder.com/12/FFC733/FFC733.png" width="51" height="12"/>  |
+| `tinyrand` | Wyrand    |             14.6 | <img src="https://via.placeholder.com/12/33FFE0/33FFE0.png" width="146" height="12"/> |
+| `tinyrand` | Xorshift  |              6.7 | <img src="https://via.placeholder.com/12/33FFE0/33FFE0.png" width="67" height="12"/>  |
 
 TL;DR: `tinyrand` is almost 3x faster than `fastrand` and more than 6x faster than `rand`.
 
@@ -37,7 +37,7 @@ cargo add tinyrand
 ```
 
 ## The basics
-To generate some `u64`s, create a new `StdRand`, which is an alias for the default/recommended RNG. (Currently set to Wyrand.)
+A `Rand` instance is required to generate numbers. Here, we use `StdRand`, which is an alias for the default/recommended RNG. (Currently set to `Wyrand`, but may change in the future.)
 
 ```rust
 let mut rand = StdRand::default();
@@ -94,4 +94,34 @@ while !condition.has_happened() {
     thread::sleep(random_duration);
     waits += 1;
 }
+```
+
+## Seeding
+Invoking `Default::default()` on a `Rand` initialises it with a constant seed. This is great for repeatability, but always results in the same run of "random" numbers, which is not what most folks need.
+
+`tinyrand` is a `no_std` crate and, sadly, there is no good, portable way to generate entropy when one cannot make assumptions about the underlying platform. In most applications, one would use a clock, but something as simple as `SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)` mightn't be always available.
+
+If you have an entropy source at your disposal, you could seed an `Rrnd` as so:
+
+```rust
+let seed = get_seed_from_somewhere();
+let mut rand = StdRand::seed(seed);
+let num = rand.next_u64();
+println!("generated {num}");
+```
+
+If one doesn't care about `no_std`, they shouldn't be bound by its limitations. To seed from the system clock, you can opt in to `std`:
+
+```
+cargo add tinyrand-std
+```
+
+Now, we have a `ClockSeed` at our disposal, which also implements the `Rand` trait. `ClockSeed` derives a `u64` by XORing the upper 64 bits of the nanosecond timestamp (from `SystemTime`) with the lower 64 bits. It's not suitable for cryptographic use, but it will suit most general-purpose applications.
+
+```rust
+let seed = ClockSeed::default().next_u64();
+println!("seeding with {seed}");
+let mut rand = StdRand::seed(seed);
+let num = rand.next_u64();
+println!("generated {num}");
 ```

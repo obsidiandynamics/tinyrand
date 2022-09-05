@@ -1,13 +1,14 @@
 [package]
-name = "tinyrand-tools"
+name = "tinyrand-examples"
 version = "0.1.0"
 edition = "2021"
 readme = "../README.md"
 authors = ["Emil Koutanov"]
 license = "MIT"
-description = "Various tooling for tinyrand"
+description = "Examples for tinyrand"
 repository = "https://github.com/obsidiandynamics/tinyrand"
 keywords = ["rand", "rng"]
 
 [dependencies]
 tinyrand = { version = "0.1.0", path = "../tinyrand" }
+tinyrand-std = { version = "0.1.0", path = "../tinyrand-std" }
