@@ -125,3 +125,9 @@ let mut rand = StdRand::seed(seed);
 let num = rand.next_u64();
 println!("generated {num}");
 ```
+
+# Credits
+* G. Marsaglia for [Xorshift](https://en.wikipedia.org/wiki/Xorshift).
+* Y. Wang, D. B. Romero, D. Lemire and L. Jin for [Wyrand](https://github.com/wangyi-fudan/wyhash/blob/master/Modern%20Non-Cryptographic%20Hash%20Function%20and%20Pseudorandom%20Number%20Generator.pdf).
+* R. G. Brown for the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) test suite.
+* D. Lemire for the work on [Fast Random Integer Generation in an Interval](https://arxiv.org/abs/1805.10941).
