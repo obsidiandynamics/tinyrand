@@ -62,7 +62,7 @@ let mut rand = StdRand::default();
 let tasks = vec!["went to market", "stayed home", "had roast beef", "had none"];
 let random_index = rand.next_range(0..tasks.len() as u64);
 let random_task = tasks[random_index as usize];
-println!("This little piggie {random_task}");
+println!("This little piggy {random_task}");
 ```
 
 Another common use case is generating `bool`s. We might also want to assign a weighting to the binary outcomes:
