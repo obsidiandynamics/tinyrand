@@ -89,6 +89,7 @@ pub fn fixed(val: u64) -> impl FnMut(&State) -> u64 {
 }
 
 /// An internally mutable `u64`.
+#[derive(Debug)]
 pub struct U64Cell(RefCell<u64>);
 
 impl Default for U64Cell {

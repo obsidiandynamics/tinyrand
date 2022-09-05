@@ -1,3 +1,4 @@
+use alloc::format;
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicU64, Ordering};
 use crate::{Mock, Rand};
@@ -58,4 +59,11 @@ fn invocations() {
     assert_eq!(100, mock.next_u64());
     assert_eq!(2, mock.state.invocations());
     assert_eq!(1, invocations.load(Ordering::Relaxed));
+}
+
+#[test]
+fn u64cell_implements_debug() {
+    let d = format!("{:?}", U64Cell::new(42));
+    assert!(d.contains("U64Cell"));
+    assert!(d.contains("42"));
 }

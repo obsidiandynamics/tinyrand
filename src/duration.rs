@@ -5,9 +5,7 @@ use crate::{Rand, RandLim, RandRange};
 impl<R: Rand> RandRange<Duration> for R {
     #[inline(always)]
     fn next_range(&mut self, range: Range<Duration>) -> Duration {
-        if range.is_empty() {
-            return range.start;
-        }
+        assert!(!range.is_empty(), "empty range");
         let span = (range.end - range.start).as_nanos();
         let random = self.next_lim(span);
         range.start + duration_from_nanos(random)

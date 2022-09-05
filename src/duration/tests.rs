@@ -1,8 +1,9 @@
 use crate::duration::duration_from_nanos;
-use crate::{Rand, RandRange, Wyrand, Xorshift};
+use crate::{Mock, Rand, RandRange, Wyrand, Xorshift};
 use alloc::vec;
 use core::ops::Range;
 use core::time::Duration;
+use crate::mock::fixed;
 
 #[test]
 fn duration_from_nanos_reversible() {
@@ -43,11 +44,6 @@ fn __random_duration(mut rand: impl Rand) {
     }
     for case in &vec![
         // from zero
-        Case {
-            range: Duration::ZERO..Duration::ZERO,
-            exp_min: Duration::ZERO,
-            exp_max: Duration::ZERO,
-        },
         Case {
             range: Duration::ZERO..Duration::from_nanos(100),
             exp_min: Duration::ZERO,
@@ -109,36 +105,16 @@ fn __random_duration(mut rand: impl Rand) {
             exp_min: Duration::from_secs(u64::MAX >> 1),
             exp_max: Duration::MAX - NANOSECOND,
         },
-        // from top
-        Case {
-            range: Duration::from_nanos(100)..Duration::from_nanos(100),
-            exp_min: Duration::from_nanos(100),
-            exp_max: Duration::from_nanos(100),
-        },
-        Case {
-            range: Duration::from_micros(100)..Duration::from_micros(100),
-            exp_min: Duration::from_micros(100),
-            exp_max: Duration::from_micros(100),
-        },
-        Case {
-            range: Duration::from_millis(100)..Duration::from_millis(100),
-            exp_min: Duration::from_millis(100),
-            exp_max: Duration::from_millis(100),
-        },
-        Case {
-            range: Duration::from_secs(100)..Duration::from_secs(100),
-            exp_min: Duration::from_secs(100),
-            exp_max: Duration::from_secs(100),
-        },
-        // excess
-        Case {
-            range: Duration::from_secs(101)..Duration::from_secs(100),
-            exp_min: Duration::from_secs(101),
-            exp_max: Duration::from_secs(101),
-        },
     ] {
         let d = rand.next_range(case.range.clone());
         assert!(d >= case.exp_min, "for {case:?} random duration was {d:?}");
         assert!(d <= case.exp_max, "for {case:?} random duration was {d:?}");
     }
+}
+
+#[test]
+#[should_panic(expected="empty range")]
+fn empty_duration_range() {
+    let mut rand = Mock::new(fixed(0));
+    rand.next_range(Duration::ZERO..Duration::ZERO);
 }

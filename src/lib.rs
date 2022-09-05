@@ -50,7 +50,7 @@ pub trait Rand {
 }
 
 /// Represents a probability in the range \[0, 1\].
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Probability(f64);
 
 impl Probability {
@@ -111,9 +111,14 @@ pub trait RandLim<N> {
 impl<R: Rand> RandLim<u64> for R {
     #[inline(always)]
     fn next_lim(&mut self, lim: u64) -> u64 {
+        assert_ne!(0, lim);
         let mut full = self.next_u64() as u128 * lim as u128;
         let mut low = full as u64;
         if low < lim {
+            // #[cfg(test)]
+            // {
+            //     format!("foo");
+            // }
             let cutoff = lim.wrapping_neg() % lim;
             while low < cutoff {
                 full = self.next_u64() as u128 * lim as u128;
@@ -127,6 +132,7 @@ impl<R: Rand> RandLim<u64> for R {
 impl<R: Rand> RandLim<u128> for R {
     #[inline(always)]
     fn next_lim(&mut self, lim: u128) -> u128 {
+        assert_ne!(0, lim);
         if lim <= u64::MAX as u128 {
             self.next_lim(lim as u64) as u128
         } else {
@@ -155,9 +161,7 @@ pub trait RandRange<N> {
 impl<R: Rand> RandRange<u64> for R {
     #[inline(always)]
     fn next_range(&mut self, range: Range<u64>) -> u64 {
-        if range.is_empty() {
-            return range.start;
-        }
+        assert!(!range.is_empty(), "empty range");
         let span = range.end - range.start;
         range.start + self.next_lim(span)
     }
@@ -166,9 +170,7 @@ impl<R: Rand> RandRange<u64> for R {
 impl<R: Rand> RandRange<u128> for R {
     #[inline(always)]
     fn next_range(&mut self, range: Range<u128>) -> u128 {
-        if range.is_empty() {
-            return range.start;
-        }
+        assert!(!range.is_empty(), "empty range");
         let span = range.end - range.start;
         let random = self.next_lim(span);
         range.start + random
