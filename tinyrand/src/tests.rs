@@ -35,6 +35,18 @@ fn lim_128_large() {
 }
 
 #[test]
+#[should_panic(expected="zero limit")]
+fn zero_lim_64() {
+    Mock::new(fixed(0)).next_lim(0u64);
+}
+
+#[test]
+#[should_panic(expected="zero limit")]
+fn zero_lim_128() {
+    Mock::new(fixed(0)).next_lim(0u128);
+}
+
+#[test]
 #[should_panic(expected="empty range")]
 fn empty_u64_range() {
     let mut rand = Mock::new(fixed(0));

@@ -100,7 +100,7 @@ impl From<f64> for Probability {
 pub trait Seeded {
     type Rng: Rand;
 
-    /// Creates a new [`Rand64`] instance from the given seed.
+    /// Creates a new [`Rand`] instance from the given seed.
     fn seed(seed: u64) -> Self::Rng;
 }
 
@@ -112,7 +112,7 @@ pub trait RandLim<N> {
 impl<R: Rand> RandLim<u64> for R {
     #[inline(always)]
     fn next_lim(&mut self, lim: u64) -> u64 {
-        assert_ne!(0, lim);
+        assert_ne!(0, lim, "zero limit");
         let mut full = self.next_u64() as u128 * lim as u128;
         let mut low = full as u64;
         if low < lim {
@@ -129,7 +129,7 @@ impl<R: Rand> RandLim<u64> for R {
 impl<R: Rand> RandLim<u128> for R {
     #[inline(always)]
     fn next_lim(&mut self, lim: u128) -> u128 {
-        assert_ne!(0, lim);
+        assert_ne!(0, lim, "zero limit");
         if lim <= u64::MAX as u128 {
             self.next_lim(lim as u64) as u128
         } else {

@@ -28,3 +28,6 @@ impl Rand for ClockSeed {
         ((time >> 64) ^ time) as u64
     }
 }
+
+#[cfg(test)]
+mod tests;
