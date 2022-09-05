@@ -8,7 +8,7 @@ impl<R: Rand> RandRange<Duration> for R {
         assert!(!range.is_empty(), "empty range");
         let span = (range.end - range.start).as_nanos();
         let random = self.next_lim(span);
-        range.start + duration_from_nanos(random)
+        range.start + from_nanos(random)
     }
 }
 
@@ -16,7 +16,7 @@ impl<R: Rand> RandRange<Duration> for R {
 /// This function permits the creation of a [`Duration]` from a `u128`, making it consistent with
 /// [`Duration::as_nanos`].
 #[inline(always)]
-pub const fn duration_from_nanos(nanos: u128) -> Duration {
+pub const fn from_nanos(nanos: u128) -> Duration {
     const NANOS_PER_SEC: u128 = 1_000_000_000;
     let secs = (nanos / NANOS_PER_SEC) as u64;
     let nanos = (nanos % NANOS_PER_SEC) as u32;

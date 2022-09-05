@@ -3,7 +3,7 @@
 use std::time::SystemTime;
 use tinyrand::Rand;
 
-/// Derives a seed from the system clock by XORing the upper 64 bits of the nanosecond timestamp
+/// Derives a seed from the system clock by `XOR`ing the upper 64 bits of the nanosecond timestamp
 /// with the lower 64 bits.
 ///
 /// # Examples

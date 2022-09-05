@@ -1,4 +1,4 @@
-use crate::duration::duration_from_nanos;
+use crate::duration::from_nanos;
 use crate::{Mock, Rand, RandRange, Wyrand, Xorshift};
 use alloc::vec;
 use core::ops::Range;
@@ -18,7 +18,7 @@ fn duration_from_nanos_reversible() {
 
     for case in cases {
         let nanos = case.as_nanos();
-        let duration = duration_from_nanos(nanos);
+        let duration = from_nanos(nanos);
         assert_eq!(case, duration);
     }
 }

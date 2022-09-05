@@ -11,20 +11,13 @@ use crate::{Rand, Seeded};
 /// assert_eq!(0, rand.next_u64());
 /// assert_eq!(1, rand.next_u64());
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Counter(u64);
 
 impl Counter {
     #[inline(always)]
     pub fn new(seed: u64) -> Self {
         Self(seed)
-    }
-}
-
-impl Default for Counter {
-    #[inline(always)]
-    fn default() -> Self {
-        Self(0)
     }
 }
 

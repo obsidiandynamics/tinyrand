@@ -2,20 +2,14 @@
 
 use crate::{Rand, Seeded};
 
+#[derive(Default)]
 pub struct Wyrand(u64);
-
-impl Default for Wyrand {
-    #[inline(always)]
-    fn default() -> Self {
-        Self(0)
-    }
-}
 
 impl Rand for Wyrand {
     #[inline(always)]
     fn next_u64(&mut self) -> u64 {
-        self.0 = self.0.wrapping_add(0xA0761D6478BD642F);
-        let r = self.0 as u128 * (self.0 ^ 0xE7037ED1A0B428DB) as u128;
+        self.0 = self.0.wrapping_add(0xA076_1D64_78BD_642F);
+        let r = u128::from(self.0) * u128::from(self.0 ^ 0xE703_7ED1_A0B4_28DB);
         (r as u64) ^ (r >> 64) as u64
     }
 }

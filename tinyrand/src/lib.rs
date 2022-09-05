@@ -27,7 +27,7 @@ pub trait Rand {
     /// Returns the next random `u128`.
     #[inline(always)]
     fn next_u128(&mut self) -> u128 {
-        (self.next_u64() as u128) << 64 | (self.next_u64() as u128)
+        u128::from(self.next_u64()) << 64 | u128::from(self.next_u64())
     }
 
     /// Returns a `bool` with a probability `p` of being true.
@@ -40,6 +40,8 @@ pub trait Rand {
     /// ```
     #[inline(always)]
     fn next_bool(&mut self, p: Probability) -> bool {
+        #[allow(clippy::cast_precision_loss)]
+        #[allow(clippy::cast_sign_loss)]
         let cutoff = (p.0 * u64::MAX as f64) as u64;
         let mut next = self.next_u64();
         if next == u64::MAX {
@@ -73,8 +75,10 @@ impl Probability {
         Self(p)
     }
 
-    /// Creates a new [`Probability`] value, without checking the bounds. If a
-    /// probability is created outside the range \[0, 1\], its behaviour with an
+    /// Creates a new [`Probability`] value, without checking the bounds.
+    ///
+    /// # Safety
+    /// If a probability is created outside the range \[0, 1\], its behaviour with an
     /// RNG is undefined.
     #[inline(always)]
     pub const unsafe fn new_unchecked(p: f64) -> Self {
@@ -113,12 +117,12 @@ impl<R: Rand> RandLim<u64> for R {
     #[inline(always)]
     fn next_lim(&mut self, lim: u64) -> u64 {
         assert_ne!(0, lim, "zero limit");
-        let mut full = self.next_u64() as u128 * lim as u128;
+        let mut full = u128::from(self.next_u64()) * u128::from(lim);
         let mut low = full as u64;
         if low < lim {
             let cutoff = lim.wrapping_neg() % lim;
             while low < cutoff {
-                full = self.next_u64() as u128 * lim as u128;
+                full = u128::from(self.next_u64()) * u128::from(lim);
                 low = full as u64;
             }
         }
@@ -130,8 +134,8 @@ impl<R: Rand> RandLim<u128> for R {
     #[inline(always)]
     fn next_lim(&mut self, lim: u128) -> u128 {
         assert_ne!(0, lim, "zero limit");
-        if lim <= u64::MAX as u128 {
-            self.next_lim(lim as u64) as u128
+        if lim <= u128::from(u64::MAX) {
+            u128::from(self.next_lim(lim as u64))
         } else {
             let cutoff = cutoff_u128(lim);
             loop {
