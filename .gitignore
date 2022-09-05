@@ -1,0 +1,16 @@
+/target
+/Cargo.lock
+.DS_Store
+.idea
+ccov.zip
+default.profraw
+lcov.info
+coverage
+*.profraw
+/doc
+counter.bin
+counter.txt
+wyrand.bin
+wyrand.txt
+xorshift.bin
+xorshift.txt
