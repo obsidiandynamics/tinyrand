@@ -1,151 +1,174 @@
-extern crate alloc;
-
+use crate::{cutoff_u128, Mock, Probability, Rand, RandRange, Wyrand, Xorshift};
 use alloc::vec;
 use core::ops::Range;
-use core::time::Duration;
-use crate::{duration_from_nanos, Rand, RandRange, Wyrand, Xorshift};
+use crate::mock::{U64Cell, echo};
 
 #[test]
-fn duration_from_nanos_reversible() {
-    let cases = vec![
-        Duration::ZERO,
-        Duration::from_nanos(1),
-        Duration::from_micros(1),
-        Duration::from_millis(1),
-        Duration::from_secs(1),
-        Duration::MAX,
-    ];
-
-    for case in cases {
-        let nanos = case.as_nanos();
-        let duration = duration_from_nanos(nanos);
-        assert_eq!(case, duration);
-    }
+fn random_range_wyrand() {
+    __random_range(Wyrand::default());
 }
 
 #[test]
-fn random_duration_wyrand() {
-    __random_duration(Wyrand::default());
+fn random_range_xorshift() {
+    __random_range(Xorshift::default());
 }
 
-#[test]
-fn random_duration_xorshift() {
-    __random_duration(Xorshift::default());
-}
-
-fn __random_duration(mut rand: impl Rand) {
-    const NANOSECOND: Duration = Duration::new(0, 1);
-
+fn __random_range(mut rand: impl Rand) {
     #[derive(Debug)]
     struct Case {
-        range: Range<Duration>,
-        exp_min: Duration,
-        exp_max: Duration,
+        range: Range<u64>,
+        exp_min: u64,
+        exp_max: u64,
     }
     for case in &vec![
         // from zero
         Case {
-            range: Duration::ZERO..Duration::ZERO,
-            exp_min: Duration::ZERO,
-            exp_max: Duration::ZERO,
+            range: 0..0,
+            exp_min: 0,
+            exp_max: 0,
         },
         Case {
-            range: Duration::ZERO..Duration::from_nanos(100),
-            exp_min: Duration::ZERO,
-            exp_max: Duration::from_nanos(100) - NANOSECOND,
+            range: 0..100,
+            exp_min: 0,
+            exp_max: 100 - 1,
         },
         Case {
-            range: Duration::ZERO..Duration::from_nanos(1),
-            exp_min: Duration::ZERO,
-            exp_max: Duration::ZERO,
+            range: 0..1,
+            exp_min: 0,
+            exp_max: 0,
         },
         Case {
-            range: Duration::ZERO..Duration::from_micros(100),
-            exp_min: Duration::ZERO,
-            exp_max: Duration::from_micros(100) - NANOSECOND
+            range: 0..100,
+            exp_min: 0,
+            exp_max: 100 - 1,
         },
         Case {
-            range: Duration::ZERO..Duration::from_millis(100),
-            exp_min: Duration::ZERO,
-            exp_max: Duration::from_millis(100) - NANOSECOND
+            range: 0..100,
+            exp_min: 0,
+            exp_max: 100 - 1,
         },
         Case {
-            range: Duration::ZERO..Duration::from_secs(100),
-            exp_min: Duration::ZERO,
-            exp_max: Duration::from_secs(100) - NANOSECOND
+            range: 0..100,
+            exp_min: 0,
+            exp_max: 100 - 1,
         },
         Case {
-            range: Duration::ZERO..Duration::MAX,
-            exp_min: Duration::ZERO,
-            exp_max: Duration::MAX - NANOSECOND
+            range: 0..u64::MAX,
+            exp_min: 0,
+            exp_max: u64::MAX - 1,
         },
         // from half
         Case {
-            range: Duration::from_nanos(50)..Duration::from_nanos(100),
-            exp_min: Duration::from_nanos(50),
-            exp_max: Duration::from_nanos(100) - NANOSECOND
+            range: 50..100,
+            exp_min: 50,
+            exp_max: 100 - 1,
         },
         Case {
-            range: Duration::from_nanos(50)..Duration::from_nanos(51),
-            exp_min: Duration::from_nanos(50),
-            exp_max: Duration::from_nanos(51) - NANOSECOND
+            range: 50..51,
+            exp_min: 50,
+            exp_max: 51 - 1,
         },
         Case {
-            range: Duration::from_micros(50)..Duration::from_micros(100),
-            exp_min: Duration::from_micros(50),
-            exp_max: Duration::from_micros(100) - NANOSECOND
+            range: 50..100,
+            exp_min: 50,
+            exp_max: 100 - 1,
         },
         Case {
-            range: Duration::from_millis(50)..Duration::from_millis(100),
-            exp_min: Duration::from_millis(50),
-            exp_max: Duration::from_millis(100) - NANOSECOND
+            range: 50..100,
+            exp_min: 50,
+            exp_max: 100 - 1,
         },
         Case {
-            range: Duration::from_secs(50)..Duration::from_secs(100),
-            exp_min: Duration::from_secs(50),
-            exp_max: Duration::from_secs(100) - NANOSECOND
+            range: 50..100,
+            exp_min: 50,
+            exp_max: 100 - 1,
         },
         Case {
-            range: Duration::from_secs(u64::MAX >> 1)..Duration::MAX,
-            exp_min: Duration::from_secs(u64::MAX >> 1),
-            exp_max: Duration::MAX - NANOSECOND
+            range: u64::MAX >> 1..u64::MAX,
+            exp_min: u64::MAX >> 1,
+            exp_max: u64::MAX - 1,
         },
         // from top
         Case {
-            range: Duration::from_nanos(100)..Duration::from_nanos(100),
-            exp_min: Duration::from_nanos(100),
-            exp_max: Duration::from_nanos(100)
+            range: 100..100,
+            exp_min: 100,
+            exp_max: 100,
         },
         Case {
-            range: Duration::from_micros(100)..Duration::from_micros(100),
-            exp_min: Duration::from_micros(100),
-            exp_max: Duration::from_micros(100)
+            range: 100..100,
+            exp_min: 100,
+            exp_max: 100,
         },
         Case {
-            range: Duration::from_millis(100)..Duration::from_millis(100),
-            exp_min: Duration::from_millis(100),
-            exp_max: Duration::from_millis(100)
+            range: 100..100,
+            exp_min: 100,
+            exp_max: 100,
         },
         Case {
-            range: Duration::from_secs(100)..Duration::from_secs(100),
-            exp_min: Duration::from_secs(100),
-            exp_max: Duration::from_secs(100)
+            range: 100..100,
+            exp_min: 100,
+            exp_max: 100,
         },
         // excess
         Case {
-            range: Duration::from_secs(101)..Duration::from_secs(100),
-            exp_min: Duration::from_secs(101),
-            exp_max: Duration::from_secs(101)
-        }
+            range: 101..100,
+            exp_min: 101,
+            exp_max: 101,
+        },
     ] {
         let d = rand.next_range(case.range.clone());
-        assert!(
-            d >= case.exp_min,
-            "for {case:?} random duration was {d:?}"
-        );
-        assert!(
-            d <= case.exp_max,
-            "for {case:?} random duration was {d:?}"
-        );
+        assert!(d >= case.exp_min, "for {case:?} random was {d:?}");
+        assert!(d <= case.exp_max, "for {case:?} random was {d:?}");
     }
+}
+
+#[test]
+#[should_panic(expected="cannot be less than 0")]
+fn probability_panics_lt_0() {
+    Probability::new(0f64 - f64::EPSILON);
+}
+
+#[test]
+#[should_panic(expected="cannot be greater than 1")]
+fn probability_panics_gt_1() {
+    Probability::new(1f64 + f64::EPSILON);
+}
+
+#[test]
+fn test_cutoff_u128() {
+    assert_eq!(u128::MAX, cutoff_u128(1));
+    assert_eq!(u128::MAX, cutoff_u128(2));
+    assert_eq!(u128::MAX - 1, cutoff_u128(3));
+}
+
+#[test]
+fn next_bool() {
+    // NB: no matter what the random number, p(0.0) should always evaluate to false,
+    // while p(1.0) should always evaluate to true
+
+    let cell = U64Cell::default();
+    let mut rand = Mock::new(echo(&cell));
+    cell.set(0);
+    assert!(!rand.next_bool(0.0.into()));
+    assert!(rand.next_bool(f64::EPSILON.into()));
+    assert!(rand.next_bool(0.5.into()));
+    assert!(rand.next_bool(1.0.into()));
+
+    cell.set(u64::MAX / 4);
+    assert!(!rand.next_bool(0.0.into()));
+    assert!(!rand.next_bool((0.25 - f64::EPSILON).into()));
+    assert!(rand.next_bool((0.25 + f64::EPSILON).into()));
+    assert!(rand.next_bool(1.0.into()));
+
+    cell.set(u64::MAX / 2);
+    assert!(!rand.next_bool(0.0.into()));
+    assert!(!rand.next_bool((0.5 - f64::EPSILON).into()));
+    assert!(rand.next_bool((0.5 + f64::EPSILON).into()));
+    assert!(rand.next_bool(1.0.into()));
+
+    cell.set(u64::MAX);
+    assert!(!rand.next_bool(0.0.into()));
+    assert!(!rand.next_bool(0.5.into()));
+    assert!(!rand.next_bool((1.0 - f64::EPSILON).into()));
+    assert!(rand.next_bool(1.0.into()));
 }

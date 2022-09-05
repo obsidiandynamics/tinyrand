@@ -1,6 +1,7 @@
 //! Mock RNG for testing.
 
-use core::ops::Range;
+use core::cell::{Ref, RefCell, RefMut};
+use core::ops::{Range};
 use crate::Rand;
 
 /// Mock state.
@@ -78,13 +79,77 @@ pub fn counter(range: Range<u64>) -> impl FnMut(&State) -> u64 {
 /// # Examples
 /// ```
 /// use tinyrand::{Mock, Rand};
-/// use tinyrand::mock::constant;
-/// let mut mock = Mock::new(constant(42));
+/// use tinyrand::mock::fixed;
+/// let mut mock = Mock::new(fixed(42));
 /// assert_eq!(42, mock.next_u64());
 /// assert_eq!(42, mock.next_u64());
 /// ```
-pub fn constant(val: u64) -> impl FnMut(&State) -> u64 {
+pub fn fixed(val: u64) -> impl FnMut(&State) -> u64 {
     move |_| val
+}
+
+/// An internally mutable `u64`.
+pub struct U64Cell(RefCell<u64>);
+
+impl Default for U64Cell {
+    fn default() -> Self {
+        Self::new(0)
+    }
+}
+
+impl U64Cell {
+    /// Creates a new cell.
+    pub fn new(initial: u64) -> Self {
+        Self(RefCell::new(initial))
+    }
+
+    /// Immutably borrows the contained value.
+    ///
+    /// # Panics
+    /// If the value is mutably borrowed elsewhere.
+    pub fn borrow(&self) -> Ref<u64> {
+        self.0.borrow()
+    }
+
+    /// Mutably borrows the contained value.
+    ///
+    /// # Panics
+    /// If the value is mutably borrowed elsewhere.
+    pub fn borrow_mut(&self) -> RefMut<u64> {
+        self.0.borrow_mut()
+    }
+
+    /// Obtains the current value.
+    ///
+    /// # Panics
+    /// If the value is mutably borrowed elsewhere.
+    pub fn get(&self) -> u64 {
+        *self.borrow()
+    }
+
+    /// Assigns a new value.
+    ///
+    /// # Panics
+    /// If the value is mutably borrowed elsewhere.
+    pub fn set(&self, val: u64) {
+        *self.borrow_mut() = val;
+    }
+}
+
+/// A pre-canned delegate that parrots the value contained in the given cell.
+///
+/// # Examples
+/// ```
+/// use tinyrand::{Mock, Rand};
+/// use tinyrand::mock::{counter, echo, U64Cell};
+/// let cell = U64Cell::default();
+/// let mut mock = Mock::new(echo(&cell));
+/// assert_eq!(0, mock.next_u64());
+/// cell.set(42);
+/// assert_eq!(42, mock.next_u64());
+/// ```
+pub fn echo(cell: &U64Cell) -> impl FnMut(&State) -> u64 + '_ {
+    |_| *cell.borrow()
 }
 
 #[cfg(test)]

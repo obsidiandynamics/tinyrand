@@ -1,7 +1,7 @@
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicU64, Ordering};
 use crate::{Mock, Rand};
-use crate::mock::{constant, counter};
+use crate::mock::{fixed, counter, echo, U64Cell};
 
 #[test]
 fn mock_counter() {
@@ -18,12 +18,24 @@ fn mock_counter() {
 }
 
 #[test]
-fn mock_constant() {
-    let mut mock = Mock::new(constant(42));
+fn mock_fixed() {
+    let mut mock = Mock::new(fixed(42));
     assert_eq!(0, mock.state.invocations);
     assert_eq!(42, mock.next_u64());
     assert_eq!(1, mock.state.invocations);
     assert_eq!(42, mock.next_u64());
+}
+
+#[test]
+fn mock_echo() {
+    let cell = U64Cell::default();
+    let mut mock = Mock::new(echo(&cell));
+    assert_eq!(0, mock.state.invocations);
+    assert_eq!(0, mock.next_u64());
+    cell.set(42);
+    assert_eq!(1, mock.state.invocations);
+    assert_eq!(42, mock.next_u64());
+    assert_eq!(42, cell.get());
 }
 
 #[test]
