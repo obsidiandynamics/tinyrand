@@ -26,12 +26,72 @@ Below is a comparison of several notable RNGs.
 TL;DR: `tinyrand` is almost 3x faster than `fastrand` and more than 6x faster than `rand`.
 
 # Statistical properties
-It's impossible to tell for certain whether an RNG is good; the answer is probabilistic. `tinyrand` (both Wyrand and Xorshift) copes very well against the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) battery of tests. That means it produces numbers that appear sufficiently random and is likely fit for use in most applications.
+It's impossible to tell for certain whether a PRNG is good; the answer is probabilistic. `tinyrand` (both Wyrand and Xorshift) algorithms stand up well against the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) battery of tests. (Tested on 30.8 billion samples.) This means `tinyrand` produces numbers that appear sufficiently random and is likely fit for use in most applications.
 
-`tinyrand` algorithms are not cryptographically secure, meaning it is possible to guess the next random number by observing a sequence of numbers. If you need a CSPRNG, it is strongly suggested that you go with `rand`. Most folks don't, but if you do...
+`tinyrand` algorithms are not cryptographically secure, meaning it is possible to guess the next random number by observing a sequence of numbers. If you need a CSPRNG, it is strongly suggested that you go with `rand`. CSPRNGs are generally a lot slower and most folks don't need one.
 
 # Getting started
 ## Add dependency
 ```sh
 cargo add tinyrand
+```
+
+## The basics
+To generate some `u64`s, create a new `StdRand`, which is an alias for the default/recommended RNG. (Currently set to Wyrand.)
+
+```rust
+let mut rand = StdRand::default();
+for _ in 0..10 {
+    let num = rand.next_u64();
+    println!("generated {num}");
+}
+```
+
+Similarly, we can generate numbers of other types:
+
+```rust
+let mut rand = StdRand::default();
+let num = rand.next_u128();
+println!("generated wider {num}");
+```
+
+The `next_uXX` methods generate numbers in the entire unsigned range of the specified type. Often, we want a number in a specific range:
+
+```rust
+let mut rand = StdRand::default();
+let tasks = vec!["went to market", "stayed home", "had roast beef", "had none"];
+let random_index = rand.next_range(0..tasks.len() as u64);
+let random_task = tasks[random_index as usize];
+println!("This little piggie {random_task}");
+```
+
+Another common use case is generating `bool`s. We might also want to assign a weighting to the binary outcomes:
+
+```rust
+let mut rand = StdRand::default();
+let p = Probability::new(0.55); // a slightly weighted coin
+for _ in 0..10 {
+    if rand.next_bool(p) {
+        println!("heads"); // expect to see more heads in the (sufficiently) long run
+    } else {
+        println!("tails");
+    }
+}
+```
+
+There are times when we need our thread to sleep for a while, waiting for a condition. When many threads are sleeping, it is generally recommended they back off randomly to avoiding a stampede.
+
+```rust
+let mut rand = StdRand::default();
+let condition = SomeSpecialCondition::default();
+let base_sleep_micros = 10;
+let mut waits = 0;
+while !condition.has_happened() {
+    let min_wait = Duration::ZERO;
+    let max_wait = Duration::from_micros(base_sleep_micros * 2u64.pow(waits));
+    let random_duration = rand.next_range(min_wait..max_wait);
+    println!("backing off for {random_duration:?}");
+    thread::sleep(random_duration);
+    waits += 1;
+}
 ```

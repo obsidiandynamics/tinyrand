@@ -31,10 +31,10 @@ impl Rand for Counter {
 }
 
 impl Seeded for Counter {
-    type Rng = Counter;
+    type R = Counter;
 
     #[inline(always)]
-    fn seed(seed: u64) -> Self::Rng {
+    fn seed(seed: u64) -> Self::R {
         Self(seed)
     }
 }

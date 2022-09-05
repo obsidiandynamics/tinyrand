@@ -17,7 +17,7 @@ pub use xorshift::Xorshift;
 use core::ops::Range;
 
 /// The default/recommended [`Rand`] implementation.
-pub type DefaultRand = Wyrand;
+pub type StdRand = Wyrand;
 
 /// A minimal specification of a 64-bit random number generator.
 pub trait Rand {
@@ -34,8 +34,8 @@ pub trait Rand {
     ///
     /// # Example
     /// ```
-    /// use tinyrand::{DefaultRand, Probability, Rand};
-    /// let mut rng = DefaultRand::default();
+    /// use tinyrand::{StdRand, Probability, Rand};
+    /// let mut rng = StdRand::default();
     /// println!("{}", rng.next_bool(Probability::new(1.0 / 3.0)));
     /// ```
     #[inline(always)]
@@ -102,10 +102,10 @@ impl From<f64> for Probability {
 
 /// The means for seeding an RNG.
 pub trait Seeded {
-    type Rng: Rand;
+    type R: Rand;
 
     /// Creates a new [`Rand`] instance from the given seed.
-    fn seed(seed: u64) -> Self::Rng;
+    fn seed(seed: u64) -> Self::R;
 }
 
 pub trait RandLim<N> {

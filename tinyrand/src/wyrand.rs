@@ -15,10 +15,10 @@ impl Rand for Wyrand {
 }
 
 impl Seeded for Wyrand {
-    type Rng = Wyrand;
+    type R = Wyrand;
 
     #[inline(always)]
-    fn seed(seed: u64) -> Self::Rng {
+    fn seed(seed: u64) -> Self::R {
         Self(seed)
     }
 }

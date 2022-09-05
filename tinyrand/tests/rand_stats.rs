@@ -52,10 +52,10 @@ fn __mean_convergence<S: Seeded>(opts: Options) {
 
     for cycle in 0..opts.cycles {
         let seed = control_rand.next_u64();
-        let mut rng = S::seed(seed);
+        let mut rand = S::seed(seed);
         let mut sum = 0u128;
         for iter in 1..=opts.max_iters {
-            sum += rng.next_u64() as u128;
+            sum += rand.next_u64() as u128;
             if iter >= opts.min_iters {
                 let mean = (sum as f64 / iter as f64) as u64;
                 // println!("iter={iter}, avg={avg}");

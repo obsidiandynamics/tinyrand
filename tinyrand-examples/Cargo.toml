@@ -1,11 +1,11 @@
 [package]
-name = "tinyrand-examples"
+name = "tinyrand-tools"
 version = "0.1.0"
 edition = "2021"
 readme = "../README.md"
 authors = ["Emil Koutanov"]
 license = "MIT"
-description = "Examples of using tinyrand"
+description = "Various tooling for tinyrand"
 repository = "https://github.com/obsidiandynamics/tinyrand"
 keywords = ["rand", "rng"]
 

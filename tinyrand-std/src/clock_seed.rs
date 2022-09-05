@@ -8,11 +8,11 @@ use tinyrand::Rand;
 ///
 /// # Examples
 /// ```
-/// use tinyrand::{DefaultRand, Rand, Seeded};
+/// use tinyrand::{StdRand, Rand, Seeded};
 /// use tinyrand_std::ClockSeed;
 /// let mut seed = ClockSeed::default();
 ///
-/// let mut rand = DefaultRand::seed(seed.next_u64());
+/// let mut rand = StdRand::seed(seed.next_u64());
 /// println!("{}", rand.next_u64());
 /// ```
 #[derive(Default)]

@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "tinyrand",
+    "tinyrand-examples",
     "tinyrand-std",
     "tinyrand-tools",
 ]

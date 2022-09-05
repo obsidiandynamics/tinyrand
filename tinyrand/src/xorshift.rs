@@ -24,10 +24,10 @@ impl Rand for Xorshift {
 }
 
 impl Seeded for Xorshift {
-    type Rng = Xorshift;
+    type R = Xorshift;
 
     #[inline(always)]
-    fn seed(seed: u64) -> Self::Rng {
+    fn seed(seed: u64) -> Self::R {
         // a zero seed disables Xorshift, rendering it (effectively) a constant; hence, we avoid it
         Self(if seed == 0 { u64::MAX >> 1 } else { seed })
     }
