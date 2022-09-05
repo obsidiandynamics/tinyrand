@@ -1,0 +1,12 @@
+[package]
+name = "tinyrand"
+version = "0.1.0"
+edition = "2021"
+readme = "../README.md"
+authors = ["Emil Koutanov"]
+license = "MIT"
+description = "Lightweight RNG specification and various ultrafast implementations for Rust."
+repository = "https://github.com/obsidiandynamics/tinyrand"
+keywords = ["rand", "rng", "no_std"]
+
+[dependencies]
