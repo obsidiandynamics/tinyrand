@@ -40,6 +40,7 @@ impl Rand for Counter {
 impl Seeded for Counter {
     type Rng = Counter;
 
+    #[inline(always)]
     fn seed(seed: u64) -> Self::Rng {
         Self(seed)
     }

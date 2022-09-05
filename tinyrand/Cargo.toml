@@ -10,3 +10,6 @@ repository = "https://github.com/obsidiandynamics/tinyrand"
 keywords = ["rand", "rng", "no_std"]
 
 [dependencies]
+
+[dev-dependencies]
+rand = "0.8.5"

@@ -1,4 +1,5 @@
 //! Traits describing a basic RNG and various capability extenders.
+//! The traits and RNGs here do not need stdlib to work, nor do they need `alloc`.
 
 #![no_std]
 
@@ -115,10 +116,6 @@ impl<R: Rand> RandLim<u64> for R {
         let mut full = self.next_u64() as u128 * lim as u128;
         let mut low = full as u64;
         if low < lim {
-            // #[cfg(test)]
-            // {
-            //     format!("foo");
-            // }
             let cutoff = lim.wrapping_neg() % lim;
             while low < cutoff {
                 full = self.next_u64() as u128 * lim as u128;
