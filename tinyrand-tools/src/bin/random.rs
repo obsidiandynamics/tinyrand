@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::io::{stdout, ErrorKind, Write};
+use std::io::{stdout, ErrorKind, Write, BufWriter};
 use std::process::exit;
 use std::str::FromStr;
 use std::{env, io};
@@ -115,7 +115,7 @@ fn generate_text(
 }
 
 fn generate_bin(count: u64, mut rand: Box<dyn Rand>) -> Result<u64, Box<dyn Error>> {
-    let mut out = stdout();
+    let mut out = BufWriter::new(stdout());
     let mut buf = [0u8; 8];
     for iter in 1..=count {
         let rand = rand.next_u64();
