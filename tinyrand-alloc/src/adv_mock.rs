@@ -1,5 +1,6 @@
 //! Advanced mock RNG for testing.
 
+use alloc::boxed::Box;
 use core::cell::{Ref, RefCell, RefMut};
 use core::ops::{Range};
 use tinyrand::{Probability, Rand};
@@ -69,6 +70,7 @@ impl AdvMock {
         }
     }
 
+    #[must_use]
     pub fn with_next_bool(mut self, delegate: impl FnMut(&State, Probability, &mut NextU64) -> bool + 'static) -> Self {
         self.next_bool_delegate = Box::new(delegate);
         self
