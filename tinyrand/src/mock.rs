@@ -7,13 +7,13 @@ use crate::Rand;
 /// Mock invocation state.
 #[derive(Default)]
 pub struct State {
-    invocations: u64,
+    next_u64_invocations: u64,
 }
 
 impl State {
     /// Obtains the number of invocations of the [`Rand::next_u64`] method.
     pub fn next_u64_invocations(&self) -> u64 {
-        self.invocations
+        self.next_u64_invocations
     }
 }
 
@@ -52,7 +52,7 @@ impl<D: FnMut(&State) -> u64> Rand for Mock<D> {
     fn next_u64(&mut self) -> u64 {
         let delegate = &mut self.delegate;
         let r = delegate(&self.state);
-        self.state.invocations += 1;
+        self.state.next_u64_invocations += 1;
         r
     }
 }

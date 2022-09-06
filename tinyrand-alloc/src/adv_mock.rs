@@ -3,11 +3,11 @@
 use alloc::boxed::Box;
 use alloc::rc::Rc;
 use core::cell::RefCell;
+use tinyrand::mock::fixed;
 use tinyrand::{Probability, Rand};
-use tinyrand::mock::{fixed};
 
-/// Mock delegate for [`Rand::next_u64`].
-pub type NextU64 = Box<dyn FnMut(&State) -> u64>;
+/// Mock delegate for [`Rand::next_u128`].
+pub type NextU128 = Box<dyn FnMut(&State) -> u128>;
 
 /// Mock delegate for [`Rand::next_bool`].
 pub type NextBool = Box<dyn FnMut(Surrogate, Probability) -> bool>;
@@ -18,15 +18,15 @@ pub type NextLim = Box<dyn FnMut(Surrogate, u128) -> u128>;
 /// Mock invocation state.
 #[derive(Default)]
 pub struct State {
-    next_u64_invocations: u64,
+    next_u128_invocations: u64,
     next_bool_invocations: u64,
     next_lim_u128_invocations: u64,
 }
 
 impl State {
-    /// Obtains the number of invocations of the [`Rand::next_u64`] method.
-    pub fn next_u64_invocations(&self) -> u64 {
-        self.next_u64_invocations
+    /// Obtains the number of invocations of the [`Rand::next_u128`] method.
+    pub fn next_u128_invocations(&self) -> u64 {
+        self.next_u128_invocations
     }
 
     /// Obtains the number of invocations of the [`Rand::next_bool`] method.
@@ -36,7 +36,7 @@ impl State {
 
     /// Obtains the number of invocations of the [`Rand::next_lim_u128`] method.
     pub fn next_lim_u128_invocations(&self) -> u64 {
-        self.next_bool_invocations
+        self.next_lim_u128_invocations
     }
 }
 
@@ -44,7 +44,7 @@ impl State {
 /// that it can be invoked from inside the mock by, for example, another delegate.
 pub struct Surrogate<'a> {
     state: &'a mut State,
-    next_u64_delegate: &'a mut NextU64
+    next_u128_delegate: &'a mut NextU128,
 }
 
 impl<'a> Surrogate<'a> {
@@ -56,8 +56,12 @@ impl<'a> Surrogate<'a> {
 
 impl<'a> Rand for Surrogate<'a> {
     fn next_u64(&mut self) -> u64 {
-        let r = (self.next_u64_delegate)(self.state);
-        self.state.next_u64_invocations += 1;
+        self.next_u128() as u64
+    }
+
+    fn next_u128(&mut self) -> u128 {
+        let r = (self.next_u128_delegate)(self.state);
+        self.state.next_u128_invocations += 1;
         r
     }
 }
@@ -65,7 +69,7 @@ impl<'a> Rand for Surrogate<'a> {
 // Mock RNG, containing invocation state and delegate closures.
 pub struct AdvMock {
     state: State,
-    next_u64_delegate: NextU64,
+    next_u128_delegate: NextU128,
     next_bool_delegate: NextBool,
     next_lim_u128_delegate: NextLim,
 }
@@ -74,32 +78,33 @@ impl Default for AdvMock {
     fn default() -> Self {
         Self {
             state: State::default(),
-            next_u64_delegate: Box::new(fixed(0)),
-            next_bool_delegate: Box::new(|mut surrogate, p| {
-                Rand::next_bool(&mut surrogate, p)
-            }),
+            next_u128_delegate: Box::new(fixed(0)),
+            next_bool_delegate: Box::new(|mut surrogate, p| Rand::next_bool(&mut surrogate, p)),
             next_lim_u128_delegate: Box::new(|mut surrogate, lim| {
                 Rand::next_lim_u128(&mut surrogate, lim)
-            })
+            }),
         }
     }
 }
 
 impl AdvMock {
-    /// Assigns a [`Rand::next_u64`] delegate to the mock. I.e., when the [`Rand::next_u64`]
-    /// method is invoked on the mock, it will delegate to the given closure.
+    /// Assigns a [`Rand::next_u128`] delegate to the mock. I.e., when the [`Rand::next_u128`]
+    /// method is invoked on the mock (directly, or via another method), it will delegate to
+    /// the given closure.
     ///
     /// # Examples
     /// ```
     /// use tinyrand::Rand;
     /// use tinyrand_alloc::AdvMock;
     /// let mut mock = AdvMock::default()
-    ///     .with_next_u64(|_| 42);
+    ///     .with_next_u128(|_| 42);
+    /// assert_eq!(42, mock.next_usize());
     /// assert_eq!(42, mock.next_u64());
+    /// assert_eq!(42, mock.next_u128());
     /// ```
     #[must_use]
-    pub fn with_next_u64(mut self, delegate: impl FnMut(&State) -> u64 + 'static) -> Self {
-        self.next_u64_delegate = Box::new(delegate);
+    pub fn with_next_u128(mut self, delegate: impl FnMut(&State) -> u128 + 'static) -> Self {
+        self.next_u128_delegate = Box::new(delegate);
         self
     }
 
@@ -115,7 +120,10 @@ impl AdvMock {
     /// assert!(mock.next_bool(Probability::new(0.01)));
     /// ```
     #[must_use]
-    pub fn with_next_bool(mut self, delegate: impl FnMut(Surrogate, Probability) -> bool + 'static) -> Self {
+    pub fn with_next_bool(
+        mut self,
+        delegate: impl FnMut(Surrogate, Probability) -> bool + 'static,
+    ) -> Self {
         self.next_bool_delegate = Box::new(delegate);
         self
     }
@@ -134,7 +142,10 @@ impl AdvMock {
     /// assert_eq!(27, mock.next_range(10..100u16));
     /// ```
     #[must_use]
-    pub fn with_next_lim_u128(mut self, delegate: impl FnMut(Surrogate, u128) -> u128 + 'static) -> Self {
+    pub fn with_next_lim_u128(
+        mut self,
+        delegate: impl FnMut(Surrogate, u128) -> u128 + 'static,
+    ) -> Self {
         self.next_lim_u128_delegate = Box::new(delegate);
         self
     }
@@ -146,12 +157,16 @@ impl AdvMock {
 }
 
 impl Rand for AdvMock {
-    /// Delegates to the underlying closure and increments the `state.next_u64_invocations` counter
-    /// _after_ the closure returns.
     fn next_u64(&mut self) -> u64 {
-        let next_u64_delegate = &mut self.next_u64_delegate;
+        self.next_u128() as u64
+    }
+
+    /// Delegates to the underlying closure and increments the `state.next_u128_invocations` counter
+    /// _after_ the closure returns.
+    fn next_u128(&mut self) -> u128 {
+        let next_u64_delegate = &mut self.next_u128_delegate;
         let r = next_u64_delegate(&self.state);
-        self.state.next_u64_invocations += 1;
+        self.state.next_u128_invocations += 1;
         r
     }
 
@@ -159,8 +174,8 @@ impl Rand for AdvMock {
     /// _after_ the closure returns.
     fn next_bool(&mut self, p: Probability) -> bool {
         let surrogate = Surrogate {
-            next_u64_delegate: &mut self.next_u64_delegate,
-            state: &mut self.state
+            next_u128_delegate: &mut self.next_u128_delegate,
+            state: &mut self.state,
         };
         let next_bool_delegate = &mut self.next_bool_delegate;
         let r = next_bool_delegate(surrogate, p);
@@ -184,8 +199,8 @@ impl Rand for AdvMock {
     /// _after_ the closure returns.
     fn next_lim_u128(&mut self, lim: u128) -> u128 {
         let surrogate = Surrogate {
-            next_u64_delegate: &mut self.next_u64_delegate,
-            state: &mut self.state
+            next_u128_delegate: &mut self.next_u128_delegate,
+            state: &mut self.state,
         };
         let next_lim_delegate = &mut self.next_lim_u128_delegate;
         let r = next_lim_delegate(surrogate, lim);
@@ -209,7 +224,7 @@ impl Rand for AdvMock {
 /// cell.set(42);
 /// assert_eq!(42, mock.next_u64());
 /// ```
-pub fn echo_heap<S>(cell: Rc<RefCell<u64>>) -> impl FnMut(&S) -> u64 {
+pub fn echo_heap<T: Copy, S>(cell: Rc<RefCell<T>>) -> impl FnMut(&S) -> T {
     move |_| *cell.borrow()
 }
 
