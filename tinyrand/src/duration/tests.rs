@@ -1,5 +1,5 @@
 use crate::duration::from_nanos;
-use crate::{Mock, Rand, RandRange, Wyrand, Xorshift};
+use crate::{Mock, Rand, RandRange};
 use alloc::vec;
 use core::ops::Range;
 use core::time::Duration;
@@ -23,17 +23,7 @@ fn duration_from_nanos_reversible() {
     }
 }
 
-#[test]
-fn random_duration_wyrand() {
-    __random_duration(Wyrand::default());
-}
-
-#[test]
-fn random_duration_xorshift() {
-    __random_duration(Xorshift::default());
-}
-
-fn __random_duration(mut rand: impl Rand) {
+pub fn random_duration(mut rand: impl Rand) {
     const NANOSECOND: Duration = Duration::new(0, 1);
 
     #[derive(Debug)]

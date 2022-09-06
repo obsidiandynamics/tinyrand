@@ -26,4 +26,4 @@ pub const fn from_nanos(nanos: u128) -> Duration {
 }
 
 #[cfg(test)]
-mod tests;
+pub mod tests;

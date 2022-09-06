@@ -1,4 +1,6 @@
 use crate::{Rand, Seeded, Xorshift};
+use crate::duration::tests::random_duration;
+use crate::tests::{lim_types_max, next_types, random_range_u128, random_range_u64, range_types_max};
 
 #[test]
 fn create_default() {
@@ -36,3 +38,31 @@ fn create_seeded() {
     assert_eq!(u64::MAX, rand.0);
     assert_ne!(0, rand.next_u64());
 }
+
+#[test]
+fn next_types_xorshift() {
+    next_types(Xorshift::default());
+}
+
+#[test]
+fn lim_types_max_xorshift() {
+    lim_types_max(Xorshift::default());
+}
+
+#[test]
+fn random_range_u64_xorshift() {
+    random_range_u64(Xorshift::default());
+}
+
+#[test]
+fn random_range_u128_xorshift() {
+    random_range_u128(Xorshift::default());
+}
+
+#[test]
+fn random_duration_xorshift() {
+    random_duration(Xorshift::default());
+}
+
+#[test]
+fn range_types_max_xorshift() { range_types_max(Xorshift::default()); }

@@ -9,7 +9,7 @@ use tinyrand::{Counter, Rand, Wyrand, Xorshift};
 fn main() {
     match generate() {
         Ok(samples) => {
-            eprintln!("{samples} samples emitted")
+            eprintln!("{samples} samples emitted");
         }
         Err(err) => {
             eprintln!("Error: {}", err);
@@ -78,13 +78,13 @@ fn generate() -> Result<u64, Box<dyn Error>> {
     let generator = Generator::from_str(&args[1])?;
     let format = OutputFormat::from_str(&args[2])?;
     let count = &args[3];
-    let count = count.replace("K", "000");             // kilo-
-    let count = count.replace("M", "000000");          // million/mega-
-    let count = count.replace("B", "000000000");       // billion/giga-
-    let count = count.replace("G", "000000000");
-    let count = count.replace("T", "000000000000");    // trillion/tera-
-    let count = count.replace("Q", "000000000000000"); // quadrillion/peta-
-    let count = count.replace("P", "000000000000000");
+    let count = count.replace('K', "000");             // kilo-
+    let count = count.replace('M', "000000");          // million/mega-
+    let count = count.replace('B', "000000000");       // billion/giga-
+    let count = count.replace('G', "000000000");
+    let count = count.replace('T', "000000000000");    // trillion/tera-
+    let count = count.replace('Q', "000000000000000"); // quadrillion/peta-
+    let count = count.replace('P', "000000000000000");
     let count = u64::from_str(&count)?;
 
     let rand: Box<dyn Rand> = match generator {

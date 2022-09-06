@@ -19,7 +19,7 @@ use core::ops::Range;
 /// The default/recommended [`Rand`] implementation.
 pub type StdRand = Wyrand;
 
-/// A minimal specification of a 64-bit random number generator.
+/// A minimal specification of a random number generator.
 pub trait Rand {
     /// Returns the next random `u16`.
     #[inline(always)]
@@ -54,6 +54,7 @@ pub trait Rand {
         self.next_u32() as usize
     }
 
+    /// Returns the next random `usize`.
     #[cfg(target_pointer_width = "64")]
     #[inline(always)]
     fn next_usize(&mut self) -> usize {
@@ -149,6 +150,40 @@ pub trait RandLim<N> {
     fn next_lim(&mut self, lim: N) -> N;
 }
 
+impl<R: Rand> RandLim<u16> for R {
+    #[inline(always)]
+    fn next_lim(&mut self, lim: u16) -> u16 {
+        assert_ne!(0, lim, "zero limit");
+        let mut full = u32::from(self.next_u16()) * u32::from(lim);
+        let mut low = full as u16;
+        if low < lim {
+            let cutoff = lim.wrapping_neg() % lim;
+            while low < cutoff {
+                full = u32::from(self.next_u16()) * u32::from(lim);
+                low = full as u16;
+            }
+        }
+        (full >> 16) as u16
+    }
+}
+
+impl<R: Rand> RandLim<u32> for R {
+    #[inline(always)]
+    fn next_lim(&mut self, lim: u32) -> u32 {
+        assert_ne!(0, lim, "zero limit");
+        let mut full = u64::from(self.next_u32()) * u64::from(lim);
+        let mut low = full as u32;
+        if low < lim {
+            let cutoff = lim.wrapping_neg() % lim;
+            while low < cutoff {
+                full = u64::from(self.next_u32()) * u64::from(lim);
+                low = full as u32;
+            }
+        }
+        (full >> 32) as u32
+    }
+}
+
 impl<R: Rand> RandLim<u64> for R {
     #[inline(always)]
     fn next_lim(&mut self, lim: u64) -> u64 {
@@ -184,6 +219,32 @@ impl<R: Rand> RandLim<u128> for R {
     }
 }
 
+impl<R: Rand> RandLim<usize> for R {
+    #[cfg(target_pointer_width = "16")]
+    #[inline(always)]
+    fn next_lim(&mut self, lim: usize) -> usize {
+        self.next_lim(lim as u16) as usize
+    }
+
+    #[cfg(target_pointer_width = "32")]
+    #[inline(always)]
+    fn next_lim(&mut self, lim: usize) -> usize {
+        self.next_lim(lim as u32) as usize
+    }
+
+    #[cfg(target_pointer_width = "64")]
+    #[inline(always)]
+    fn next_lim(&mut self, lim: usize) -> usize {
+        self.next_lim(lim as u64) as usize
+    }
+
+    #[cfg(target_pointer_width = "128")]
+    #[inline(always)]
+    fn next_lim(&mut self, lim: usize) -> usize {
+        self.next_lim(lim as u128) as usize
+    }
+}
+
 #[inline(always)]
 fn cutoff_u128(lim: u128) -> u128 {
     let overhang = (u128::MAX - lim + 1) % lim;
@@ -193,6 +254,24 @@ fn cutoff_u128(lim: u128) -> u128 {
 pub trait RandRange<N> {
     /// Generates a random number in the given range.
     fn next_range(&mut self, range: Range<N>) -> N;
+}
+
+impl<R: Rand> RandRange<u16> for R {
+    #[inline(always)]
+    fn next_range(&mut self, range: Range<u16>) -> u16 {
+        assert!(!range.is_empty(), "empty range");
+        let span = range.end - range.start;
+        range.start + self.next_lim(span)
+    }
+}
+
+impl<R: Rand> RandRange<u32> for R {
+    #[inline(always)]
+    fn next_range(&mut self, range: Range<u32>) -> u32 {
+        assert!(!range.is_empty(), "empty range");
+        let span = range.end - range.start;
+        range.start + self.next_lim(span)
+    }
 }
 
 impl<R: Rand> RandRange<u64> for R {
@@ -211,6 +290,32 @@ impl<R: Rand> RandRange<u128> for R {
         let span = range.end - range.start;
         let random = self.next_lim(span);
         range.start + random
+    }
+}
+
+impl<R: Rand> RandRange<usize> for R {
+    #[cfg(target_pointer_width = "16")]
+    #[inline(always)]
+    fn next_range(&mut self, range: Range<usize>) -> usize {
+        self.next_range(range.start as u16..range.end as u16) as usize
+    }
+
+    #[cfg(target_pointer_width = "32")]
+    #[inline(always)]
+    fn next_range(&mut self, range: Range<usize>) -> usize {
+        self.next_range(range.start as u32..range.end as u32) as usize
+    }
+
+    #[cfg(target_pointer_width = "64")]
+    #[inline(always)]
+    fn next_range(&mut self, range: Range<usize>) -> usize {
+        self.next_range(range.start as u64..range.end as u64) as usize
+    }
+
+    #[cfg(target_pointer_width = "128")]
+    #[inline(always)]
+    fn next_range(&mut self, range: Range<usize>) -> usize {
+        self.next_range(range.start as u128..range.end as u128) as usize
     }
 }
 

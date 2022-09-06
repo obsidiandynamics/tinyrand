@@ -15,10 +15,12 @@ export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Co
 
 echo "Compiling $app_name"
 cargo build -p tinyrand
+cargo build -p tinyrand-std
 
 echo "Testing $app_name"
 export LLVM_PROFILE_FILE="${app_name}-%p-%m.profraw"
 cargo test -p tinyrand --tests # don't run doctests
+cargo test -p tinyrand-std --tests # don't run doctests
 
 rm ccov.zip 2> /dev/null || true
 zip -0 ccov.zip `find . \( -name "${app_name}*.gc*" \) -print`

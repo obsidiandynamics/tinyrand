@@ -60,8 +60,8 @@ The `next_uXX` methods generate numbers in the entire unsigned range of the spec
 ```rust
 let mut rand = StdRand::default();
 let tasks = vec!["went to market", "stayed home", "had roast beef", "had none"];
-let random_index = rand.next_range(0..tasks.len() as u64);
-let random_task = tasks[random_index as usize];
+let random_index = rand.next_range(0..tasks.len());
+let random_task = tasks[random_index];
 println!("This little piggy {random_task}");
 ```
 
