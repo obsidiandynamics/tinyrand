@@ -1,6 +1,6 @@
 //! Mock RNG for testing.
 
-use core::cell::{Ref, RefCell, RefMut};
+use core::cell::{RefCell};
 use core::ops::{Range};
 use crate::Rand;
 
@@ -28,7 +28,8 @@ impl<D: FnMut(&State) -> u64> Mock<D> {
     ///
     /// # Examples
     /// ```
-    /// use tinyrand::{Mock, Rand};
+    /// use tinyrand::Rand;
+    /// use tinyrand::mock::Mock;
     /// let mut mock = Mock::new(|_| 42);
     /// assert_eq!(42, mock.next_u64());
     /// ```
@@ -61,8 +62,8 @@ impl<D: FnMut(&State) -> u64> Rand for Mock<D> {
 ///
 /// # Examples
 /// ```
-/// use tinyrand::{Mock, Rand};
-/// use tinyrand::mock::counter;
+/// use tinyrand::Rand;
+/// use tinyrand::mock::{counter, Mock};
 /// let mut mock = Mock::new(counter(5..8));
 /// assert_eq!(5, mock.next_u64());
 /// assert_eq!(6, mock.next_u64());
@@ -83,8 +84,8 @@ pub fn counter<S>(range: Range<u64>) -> impl FnMut(&S) -> u64 {
 ///
 /// # Examples
 /// ```
-/// use tinyrand::{Mock, Rand};
-/// use tinyrand::mock::fixed;
+/// use tinyrand::Rand;
+/// use tinyrand::mock::{fixed, Mock};
 /// let mut mock = Mock::new(fixed(42));
 /// assert_eq!(42, mock.next_u64());
 /// assert_eq!(42, mock.next_u64());
@@ -93,51 +94,19 @@ pub fn fixed<S>(val: u64) -> impl FnMut(&S) -> u64 {
     move |_| val
 }
 
-/// An internally mutable `u64`.
-#[derive(Debug)]
-pub struct U64Cell(RefCell<u64>);
+/// Accessor and mutator methods for [`RefCell`].
+pub trait RefCellExt<T> {
+    fn get(&self) -> T;
 
-impl Default for U64Cell {
-    fn default() -> Self {
-        Self::new(0)
-    }
+    fn set(&self, val: T);
 }
 
-impl U64Cell {
-    /// Creates a new cell.
-    pub fn new(initial: u64) -> Self {
-        Self(RefCell::new(initial))
-    }
-
-    /// Immutably borrows the contained value.
-    ///
-    /// # Panics
-    /// If the value is mutably borrowed elsewhere.
-    pub fn borrow(&self) -> Ref<u64> {
-        self.0.borrow()
-    }
-
-    /// Mutably borrows the contained value.
-    ///
-    /// # Panics
-    /// If the value is mutably borrowed elsewhere.
-    pub fn borrow_mut(&self) -> RefMut<u64> {
-        self.0.borrow_mut()
-    }
-
-    /// Obtains the current value.
-    ///
-    /// # Panics
-    /// If the value is mutably borrowed elsewhere.
-    pub fn get(&self) -> u64 {
+impl<T: Copy> RefCellExt<T> for RefCell<T> {
+    fn get(&self) -> T {
         *self.borrow()
     }
 
-    /// Assigns a new value.
-    ///
-    /// # Panics
-    /// If the value is mutably borrowed elsewhere.
-    pub fn set(&self, val: u64) {
+    fn set(&self, val: T) {
         *self.borrow_mut() = val;
     }
 }
@@ -146,15 +115,16 @@ impl U64Cell {
 ///
 /// # Examples
 /// ```
-/// use tinyrand::{Mock, Rand};
-/// use tinyrand::mock::{counter, echo, U64Cell};
-/// let cell = U64Cell::default();
+/// use std::cell::RefCell;
+/// use tinyrand::Rand;
+/// use tinyrand::mock::{counter, echo, Mock, RefCellExt};
+/// let cell = RefCell::default();
 /// let mut mock = Mock::new(echo(&cell));
 /// assert_eq!(0, mock.next_u64());
 /// cell.set(42);
 /// assert_eq!(42, mock.next_u64());
 /// ```
-pub fn echo<S>(cell: &U64Cell) -> impl FnMut(&S) -> u64 + '_ {
+pub fn echo<S>(cell: &RefCell<u64>) -> impl FnMut(&S) -> u64 + '_ {
     |_| *cell.borrow()
 }
 

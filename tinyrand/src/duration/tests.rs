@@ -1,9 +1,9 @@
 use crate::duration::from_nanos;
-use crate::{Mock, Rand, RandRange};
+use crate::{Rand, RandRange};
 use alloc::vec;
 use core::ops::Range;
 use core::time::Duration;
-use crate::mock::fixed;
+use crate::mock::{fixed, Mock};
 
 #[test]
 fn duration_from_nanos_reversible() {

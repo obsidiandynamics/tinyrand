@@ -1,7 +1,8 @@
-use crate::{cutoff_u128, Mock, Probability, Rand, RandLim, RandRange};
+use crate::{cutoff_u128, Probability, Rand, RandLim, RandRange};
 use alloc::{format, vec};
+use core::cell::RefCell;
 use core::ops::Range;
-use crate::mock::{U64Cell, echo, counter, fixed};
+use crate::mock::{echo, counter, fixed, RefCellExt, Mock};
 
 pub fn next_types(mut rand: impl Rand) {
     assert_ne!(0, rand.next_u16());
@@ -246,7 +247,7 @@ fn next_bool() {
     // NB: no matter what the random number, p(0.0) should always evaluate to false,
     // while p(1.0) should always evaluate to true
 
-    let cell = U64Cell::default();
+    let cell = RefCell::default();
     let mut rand = Mock::new(echo(&cell));
     cell.set(0);
     assert!(!rand.next_bool(0.0.into()));

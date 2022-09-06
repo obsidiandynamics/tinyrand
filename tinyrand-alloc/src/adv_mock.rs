@@ -2,8 +2,9 @@
 
 use alloc::boxed::Box;
 use alloc::rc::Rc;
+use core::cell::RefCell;
 use tinyrand::{Probability, Rand};
-use tinyrand::mock::{fixed, U64Cell};
+use tinyrand::mock::{fixed};
 
 /// Mock delegate for [`Rand::next_u64`].
 pub type NextU64 = Box<dyn FnMut(&State) -> u64>;
@@ -197,17 +198,18 @@ impl Rand for AdvMock {
 ///
 /// # Examples
 /// ```
+/// use std::cell::RefCell;
 /// use std::rc::Rc;
-/// use tinyrand::{Mock, Rand};
-/// use tinyrand::mock::{counter, echo, U64Cell};
+/// use tinyrand::Rand;
+/// use tinyrand::mock::{counter, echo, Mock, RefCellExt};
 /// use tinyrand_alloc::echo_heap;
-/// let cell = Rc::new(U64Cell::default());
+/// let cell = Rc::new(RefCell::default());
 /// let mut mock = Mock::new(echo_heap(cell.clone()));
 /// assert_eq!(0, mock.next_u64());
 /// cell.set(42);
 /// assert_eq!(42, mock.next_u64());
 /// ```
-pub fn echo_heap<S>(cell: Rc<U64Cell>) -> impl FnMut(&S) -> u64 {
+pub fn echo_heap<S>(cell: Rc<RefCell<u64>>) -> impl FnMut(&S) -> u64 {
     move |_| *cell.borrow()
 }
 

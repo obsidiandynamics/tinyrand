@@ -11,4 +11,5 @@ keywords = ["rand", "rng"]
 
 [dependencies]
 tinyrand = { version = "0.2.0", path = "../tinyrand" }
+tinyrand-alloc = { version = "0.2.0", path = "../tinyrand-alloc" }
 tinyrand-std = { version = "0.2.0", path = "../tinyrand-std" }

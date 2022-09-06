@@ -1,8 +1,8 @@
-use alloc::format;
 use alloc::sync::Arc;
+use core::cell::RefCell;
 use core::sync::atomic::{AtomicU64, Ordering};
-use crate::{Mock, Rand};
-use crate::mock::{fixed, counter, echo, U64Cell};
+use crate::{Rand};
+use crate::mock::{fixed, counter, echo, Mock, RefCellExt};
 
 #[test]
 fn mock_counter() {
@@ -29,7 +29,7 @@ fn mock_fixed() {
 
 #[test]
 fn mock_echo() {
-    let cell = U64Cell::default();
+    let cell = RefCell::default();
     let mut mock = Mock::new(echo(&cell));
     assert_eq!(0, mock.state.invocations);
     assert_eq!(0, mock.next_u64());
@@ -59,11 +59,4 @@ fn invocations() {
     assert_eq!(100, mock.next_u64());
     assert_eq!(2, mock.state.next_u64_invocations());
     assert_eq!(1, invocations.load(Ordering::Relaxed));
-}
-
-#[test]
-fn u64cell_implements_debug() {
-    let d = format!("{:?}", U64Cell::new(42));
-    assert!(d.contains("U64Cell"));
-    assert!(d.contains("42"));
 }

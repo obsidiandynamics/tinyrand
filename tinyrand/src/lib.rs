@@ -10,7 +10,6 @@ pub mod xorshift;
 pub mod wyrand;
 
 pub use counter::Counter;
-pub use mock::Mock;
 pub use wyrand::Wyrand;
 pub use xorshift::Xorshift;
 

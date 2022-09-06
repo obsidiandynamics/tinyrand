@@ -1,6 +1,7 @@
 use alloc::rc::Rc;
+use core::cell::RefCell;
 use tinyrand::{Probability, Rand, RandLim};
-use tinyrand::mock::{fixed, U64Cell};
+use tinyrand::mock::{fixed, RefCellExt};
 use crate::adv_mock::AdvMock;
 use crate::echo_heap;
 
@@ -27,7 +28,7 @@ fn next_bool() {
 
 #[test]
 fn next_bool_delegates_by_default() {
-    let cell = Rc::new(U64Cell::default());
+    let cell = Rc::new(RefCell::default());
     let mut mock = AdvMock::default()
         .with_next_u64(echo_heap(cell.clone()));
     assert_eq!(0, mock.state.next_bool_invocations);
@@ -69,7 +70,7 @@ fn next_lim() {
 
 #[test]
 fn next_lim_delegates_by_default() {
-    let cell = Rc::new(U64Cell::default());
+    let cell = Rc::new(RefCell::default());
     let mut mock = AdvMock::default()
         .with_next_u64(echo_heap(cell.clone()));
     assert_eq!(0, mock.state.next_lim_u128_invocations);
