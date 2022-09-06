@@ -85,6 +85,7 @@ pub fn counter<T, S>(range: Range<T>) -> impl FnMut(&S) -> T
 
 /// Something that has a successor value.
 pub trait Next {
+    #[must_use]
     fn next(self) -> Self;
 }
 
