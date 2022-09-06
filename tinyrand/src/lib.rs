@@ -20,6 +20,11 @@ use core::ops::Range;
 pub type StdRand = Wyrand;
 
 /// A minimal specification of a random number generator.
+///
+/// Implementers must, at minimum, provide a working [`next_u64`]. The rest of the methods will
+/// be derived. The default implementations either truncate the generated number (`u16`, `u32`)
+/// or generate several numbers and splice the outputs (`u128`). Implementers may provide more 
+/// efficient versions for `u16`, `u32` and `u128` generators, overriding the defaults.
 pub trait Rand {
     /// Returns the next random `u16`.
     #[inline(always)]

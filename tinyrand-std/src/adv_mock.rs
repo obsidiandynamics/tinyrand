@@ -1,35 +1,77 @@
-//! Mock RNG for testing.
+//! Advanced mock RNG for testing.
 
 use core::cell::{Ref, RefCell, RefMut};
 use core::ops::{Range};
-use crate::Rand;
+use tinyrand::{Probability, Rand};
+
+/// Mock delegate for [`Rand::next_u64`].
+pub type NextU64 = Box<dyn FnMut(&State) -> u64>;
+
+/// Mock delegate for [`Rand::next_bool`].
+pub type NextBool = Box<dyn FnMut(&State, Probability, &mut NextU64) -> bool>;
 
 /// Mock state.
 #[derive(Default)]
 pub struct State {
-    invocations: u64,
+    next_u64_invocations: u64,
+    next_bool_invocations: u64,
 }
 
 impl State {
     /// Obtains the number of invocations of the [`Rand::next_u64`] method.
-    pub fn invocations(&self) -> u64 {
-        self.invocations
+    pub fn next_u64_invocations(&self) -> u64 {
+        self.next_u64_invocations
+    }
+
+    /// Obtains the number of invocations of the [`Rand::next_bool`] method.
+    pub fn next_bool_invocations(&self) -> u64 {
+        self.next_bool_invocations
+    }
+}
+
+struct RandSurrogate<'a> {
+    state: &'a State,
+    next_u64_delegate: &'a mut NextU64
+}
+
+impl<'a> Rand for RandSurrogate<'a> {
+    fn next_u64(&mut self) -> u64 {
+        (self.next_u64_delegate)(self.state)
     }
 }
 
 // Mock RNG, initialised with a delegate closure.
-pub struct Mock<D: FnMut(&State) -> u64> {
+pub struct AdvMock {
     state: State,
-    delegate: D,
+    next_64_delegate: NextU64,
+    next_bool_delegate: NextBool,
 }
 
-impl<D: FnMut(&State) -> u64> Mock<D> {
+impl Default for AdvMock {
+    fn default() -> Self {
+        todo!()
+    }
+}
+
+impl AdvMock {
     /// Creates a new mock with the supplied delegate closure.
-    pub fn new(delegate: D) -> Self {
+    pub fn new(delegate: impl FnMut(&State) -> u64 + 'static) -> Self {
         Self {
             state: State::default(),
-            delegate
+            next_64_delegate: Box::new(delegate),
+            next_bool_delegate: Box::new(|state, p, next_u64_delegate| {
+                let mut surrogate = RandSurrogate {
+                    state,
+                    next_u64_delegate
+                };
+                Rand::next_bool(&mut surrogate, p)
+            })
         }
+    }
+
+    pub fn with_next_bool(mut self, delegate: impl FnMut(&State, Probability, &mut NextU64) -> bool + 'static) -> Self {
+        self.next_bool_delegate = Box::new(delegate);
+        self
     }
 
     /// Obtains the underlying mock state.
@@ -38,13 +80,21 @@ impl<D: FnMut(&State) -> u64> Mock<D> {
     }
 }
 
-impl<D: FnMut(&State) -> u64> Rand for Mock<D> {
-    /// Delegates to the underlying closure and increments the `state.invocations` counter
+impl Rand for AdvMock {
+    /// Delegates to the underlying closure and increments the `state.next_u64_invocations` counter
     /// _after_ the closure returns.
     fn next_u64(&mut self) -> u64 {
-        let delegate = &mut self.delegate;
-        let r = delegate(&self.state);
-        self.state.invocations += 1;
+        let u64_delegate = &mut self.next_64_delegate;
+        let r = u64_delegate(&self.state);
+        self.state.next_u64_invocations += 1;
+        r
+    }
+
+    fn next_bool(&mut self, p: Probability) -> bool {
+        let u64_delegate = &mut self.next_64_delegate;
+        let bool_delegate = &mut self.next_bool_delegate;
+        let r = bool_delegate(&self.state, p, u64_delegate);
+        self.state.next_bool_invocations += 1;
         r
     }
 }
