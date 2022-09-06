@@ -1,10 +1,10 @@
 use std::error::Error;
-use std::fmt::{Debug, Display, Formatter};
 use std::io::{stdout, ErrorKind, Write};
 use std::process::exit;
 use std::str::FromStr;
 use std::{env, io};
-use tinyrand::{Counter, Rand, Wyrand, Xorshift};
+use tinyrand::{Counter, Rand, Seeded, Wyrand, Xorshift};
+use tinyrand_std::ClockSeed;
 
 fn main() {
     match generate() {
@@ -12,22 +12,11 @@ fn main() {
             eprintln!("{samples} samples emitted");
         }
         Err(err) => {
-            eprintln!("Error: {}", err);
+            eprintln!("{}", err);
             exit(1);
         }
     }
 }
-
-#[derive(Debug)]
-struct GeneratorError(String);
-
-impl Display for GeneratorError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Error for GeneratorError {}
 
 enum Generator {
     Xorshift,
@@ -67,17 +56,18 @@ impl FromStr for OutputFormat {
 
 fn generate() -> Result<u64, Box<dyn Error>> {
     let args: Vec<_> = env::args().collect();
-    if args.len() != 4 {
-        eprintln!(
-            "usage: {} <generator ∈ {{xorshift, wyrand, counter}}> <format ∈ {{text, binary}}> <count ∈ ℕ⁺>",
-            args[0]
-        );
-        exit(1);
+    if args.len() != 5 {
+        Err("usage: {} <generator ∈ {{xorshift, wyrand, counter}}> <seed ∈ {{clock}} ∪ ℕ> <format ∈ {{text, binary}}> <count ∈ ℕ⁺>")?;
     }
 
     let generator = Generator::from_str(&args[1])?;
-    let format = OutputFormat::from_str(&args[2])?;
-    let count = &args[3];
+    let seed = if args[2].eq_ignore_ascii_case("clock") {
+        ClockSeed::default().next_u64()
+    } else {
+        u64::from_str(&args[2])?
+    };
+    let format = OutputFormat::from_str(&args[3])?;
+    let count = &args[4];
     let count = count.replace('K', "000");             // kilo-
     let count = count.replace('M', "000000");          // million/mega-
     let count = count.replace('B', "000000000");       // billion/giga-
@@ -88,9 +78,9 @@ fn generate() -> Result<u64, Box<dyn Error>> {
     let count = u64::from_str(&count)?;
 
     let rand: Box<dyn Rand> = match generator {
-        Generator::Xorshift => Box::new(Xorshift::default()),
-        Generator::Wyrand => Box::new(Wyrand::default()),
-        Generator::Counter => Box::new(Counter::default()),
+        Generator::Xorshift => Box::new(Xorshift::seed(seed)),
+        Generator::Wyrand => Box::new(Wyrand::seed(seed)),
+        Generator::Counter => Box::new(Counter::seed(seed)),
     };
 
     match format {
