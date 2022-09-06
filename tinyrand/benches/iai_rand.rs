@@ -6,7 +6,7 @@ fn wyrand_next_u64() -> u64 {
     rand.next_u64()
 }
 
-fn wyrand_gen_bool() -> bool {
+fn wyrand_next_bool() -> bool {
     let mut rand = Wyrand::default();
     rand.next_bool(Probability::new(0.5))
 }
@@ -16,9 +16,9 @@ fn xorshift_next_u64() -> u64 {
     rand.next_u64()
 }
 
-fn xorshift_gen_bool() -> bool {
+fn xorshift_next_bool() -> bool {
     let mut rand = Xorshift::default();
     rand.next_bool(Probability::new(0.5))
 }
 
-main!(wyrand_next_u64, wyrand_gen_bool, xorshift_next_u64, xorshift_gen_bool);
+main!(wyrand_next_u64, wyrand_next_bool, xorshift_next_u64, xorshift_next_bool);

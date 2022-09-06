@@ -92,6 +92,99 @@ pub trait Rand {
         }
         next < cutoff
     }
+
+    /// Generates a random number in `0..N`.
+    #[inline(always)]
+    fn next_lim_u16(&mut self, lim: u16) -> u16 {
+        assert_ne!(0, lim, "zero limit");
+        let mut full = u32::from(self.next_u16()) * u32::from(lim);
+        let mut low = full as u16;
+        if low < lim {
+            let cutoff = lim.wrapping_neg() % lim;
+            while low < cutoff {
+                full = u32::from(self.next_u16()) * u32::from(lim);
+                low = full as u16;
+            }
+        }
+        (full >> 16) as u16
+    }
+
+    /// Generates a random number in `0..N`.
+    #[inline(always)]
+    fn next_lim_u32(&mut self, lim: u32) -> u32 {
+        assert_ne!(0, lim, "zero limit");
+        let mut full = u64::from(self.next_u32()) * u64::from(lim);
+        let mut low = full as u32;
+        if low < lim {
+            let cutoff = lim.wrapping_neg() % lim;
+            while low < cutoff {
+                full = u64::from(self.next_u32()) * u64::from(lim);
+                low = full as u32;
+            }
+        }
+        (full >> 32) as u32
+    }
+
+    /// Generates a random number in `0..N`.
+    #[inline(always)]
+    fn next_lim_u64(&mut self, lim: u64) -> u64 {
+        assert_ne!(0, lim, "zero limit");
+        let mut full = u128::from(self.next_u64()) * u128::from(lim);
+        let mut low = full as u64;
+        if low < lim {
+            let cutoff = lim.wrapping_neg() % lim;
+            while low < cutoff {
+                full = u128::from(self.next_u64()) * u128::from(lim);
+                low = full as u64;
+            }
+        }
+        (full >> 64) as u64
+    }
+
+    /// Generates a random number in `0..N`.
+    #[inline(always)]
+    fn next_lim_u128(&mut self, lim: u128) -> u128 {
+        assert_ne!(0, lim, "zero limit");
+        if lim <= u128::from(u64::MAX) {
+            u128::from(self.next_lim_u64(lim as u64))
+        } else {
+            let cutoff = cutoff_u128(lim);
+            loop {
+                let rand = self.next_u128();
+                if rand <= cutoff {
+                    return rand % lim;
+                }
+            }
+        }
+    }
+
+    /// Generates a random number in `0..N`.
+    #[cfg(target_pointer_width = "16")]
+    #[inline(always)]
+    fn next_lim_usize(&mut self, lim: usize) -> usize {
+        self.next_lim_u16(lim as u16) as usize
+    }
+
+    /// Generates a random number in `0..N`.
+    #[cfg(target_pointer_width = "32")]
+    #[inline(always)]
+    fn next_lim_usize(&mut self, lim: usize) -> usize {
+        self.next_lim_u32(lim as u32) as usize
+    }
+
+    /// Generates a random number in `0..N`.
+    #[cfg(target_pointer_width = "64")]
+    #[inline(always)]
+    fn next_lim_usize(&mut self, lim: usize) -> usize {
+        self.next_lim_u64(lim as u64) as usize
+    }
+
+    /// Generates a random number in `0..N`.
+    #[cfg(target_pointer_width = "128")]
+    #[inline(always)]
+    fn next_lim_usize(&mut self, lim: usize) -> usize {
+        self.next_lim_u128(lim as u128) as usize
+    }
 }
 
 /// Represents a probability in the range \[0, 1\].
@@ -150,106 +243,6 @@ pub trait Seeded {
     fn seed(seed: u64) -> Self::R;
 }
 
-pub trait RandLim<N> {
-    /// Generates a random number in `0..N`.
-    fn next_lim(&mut self, lim: N) -> N;
-}
-
-impl<R: Rand> RandLim<u16> for R {
-    #[inline(always)]
-    fn next_lim(&mut self, lim: u16) -> u16 {
-        assert_ne!(0, lim, "zero limit");
-        let mut full = u32::from(self.next_u16()) * u32::from(lim);
-        let mut low = full as u16;
-        if low < lim {
-            let cutoff = lim.wrapping_neg() % lim;
-            while low < cutoff {
-                full = u32::from(self.next_u16()) * u32::from(lim);
-                low = full as u16;
-            }
-        }
-        (full >> 16) as u16
-    }
-}
-
-impl<R: Rand> RandLim<u32> for R {
-    #[inline(always)]
-    fn next_lim(&mut self, lim: u32) -> u32 {
-        assert_ne!(0, lim, "zero limit");
-        let mut full = u64::from(self.next_u32()) * u64::from(lim);
-        let mut low = full as u32;
-        if low < lim {
-            let cutoff = lim.wrapping_neg() % lim;
-            while low < cutoff {
-                full = u64::from(self.next_u32()) * u64::from(lim);
-                low = full as u32;
-            }
-        }
-        (full >> 32) as u32
-    }
-}
-
-impl<R: Rand> RandLim<u64> for R {
-    #[inline(always)]
-    fn next_lim(&mut self, lim: u64) -> u64 {
-        assert_ne!(0, lim, "zero limit");
-        let mut full = u128::from(self.next_u64()) * u128::from(lim);
-        let mut low = full as u64;
-        if low < lim {
-            let cutoff = lim.wrapping_neg() % lim;
-            while low < cutoff {
-                full = u128::from(self.next_u64()) * u128::from(lim);
-                low = full as u64;
-            }
-        }
-        (full >> 64) as u64
-    }
-}
-
-impl<R: Rand> RandLim<u128> for R {
-    #[inline(always)]
-    fn next_lim(&mut self, lim: u128) -> u128 {
-        assert_ne!(0, lim, "zero limit");
-        if lim <= u128::from(u64::MAX) {
-            u128::from(self.next_lim(lim as u64))
-        } else {
-            let cutoff = cutoff_u128(lim);
-            loop {
-                let rand = self.next_u128();
-                if rand <= cutoff {
-                    return rand % lim;
-                }
-            }
-        }
-    }
-}
-
-impl<R: Rand> RandLim<usize> for R {
-    #[cfg(target_pointer_width = "16")]
-    #[inline(always)]
-    fn next_lim(&mut self, lim: usize) -> usize {
-        self.next_lim(lim as u16) as usize
-    }
-
-    #[cfg(target_pointer_width = "32")]
-    #[inline(always)]
-    fn next_lim(&mut self, lim: usize) -> usize {
-        self.next_lim(lim as u32) as usize
-    }
-
-    #[cfg(target_pointer_width = "64")]
-    #[inline(always)]
-    fn next_lim(&mut self, lim: usize) -> usize {
-        self.next_lim(lim as u64) as usize
-    }
-
-    #[cfg(target_pointer_width = "128")]
-    #[inline(always)]
-    fn next_lim(&mut self, lim: usize) -> usize {
-        self.next_lim(lim as u128) as usize
-    }
-}
-
 #[inline(always)]
 fn cutoff_u128(lim: u128) -> u128 {
     let overhang = (u128::MAX - lim + 1) % lim;
@@ -266,7 +259,7 @@ impl<R: Rand> RandRange<u16> for R {
     fn next_range(&mut self, range: Range<u16>) -> u16 {
         assert!(!range.is_empty(), "empty range");
         let span = range.end - range.start;
-        range.start + self.next_lim(span)
+        range.start + self.next_lim_u16(span)
     }
 }
 
@@ -275,7 +268,7 @@ impl<R: Rand> RandRange<u32> for R {
     fn next_range(&mut self, range: Range<u32>) -> u32 {
         assert!(!range.is_empty(), "empty range");
         let span = range.end - range.start;
-        range.start + self.next_lim(span)
+        range.start + self.next_lim_u32(span)
     }
 }
 
@@ -284,7 +277,7 @@ impl<R: Rand> RandRange<u64> for R {
     fn next_range(&mut self, range: Range<u64>) -> u64 {
         assert!(!range.is_empty(), "empty range");
         let span = range.end - range.start;
-        range.start + self.next_lim(span)
+        range.start + self.next_lim_u64(span)
     }
 }
 
@@ -293,8 +286,48 @@ impl<R: Rand> RandRange<u128> for R {
     fn next_range(&mut self, range: Range<u128>) -> u128 {
         assert!(!range.is_empty(), "empty range");
         let span = range.end - range.start;
-        let random = self.next_lim(span);
+        let random = self.next_lim_u128(span);
         range.start + random
+    }
+}
+
+pub trait RandLim<N> {
+    /// Generates a random number in `0..N`.
+    fn next_lim(&mut self, lim: N) -> N;
+}
+
+impl<R: Rand> RandLim<u16> for R {
+    #[inline(always)]
+    fn next_lim(&mut self, lim: u16) -> u16 {
+        self.next_lim_u16(lim)
+    }
+}
+
+impl<R: Rand> RandLim<u32> for R {
+    #[inline(always)]
+    fn next_lim(&mut self, lim: u32) -> u32 {
+        self.next_lim_u32(lim)
+    }
+}
+
+impl<R: Rand> RandLim<u64> for R {
+    #[inline(always)]
+    fn next_lim(&mut self, lim: u64) -> u64 {
+        self.next_lim_u64(lim)
+    }
+}
+
+impl<R: Rand> RandLim<u128> for R {
+    #[inline(always)]
+    fn next_lim(&mut self, lim: u128) -> u128 {
+        self.next_lim_u128(lim)
+    }
+}
+
+impl<R: Rand> RandLim<usize> for R {
+    #[inline(always)]
+    fn next_lim(&mut self, lim: usize) -> usize {
+        self.next_lim_usize(lim)
     }
 }
 

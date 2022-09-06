@@ -2,14 +2,14 @@
 
 use core::ops::Range;
 use core::time::Duration;
-use crate::{Rand, RandLim, RandRange};
+use crate::{Rand, RandRange};
 
 impl<R: Rand> RandRange<Duration> for R {
     #[inline(always)]
     fn next_range(&mut self, range: Range<Duration>) -> Duration {
         assert!(!range.is_empty(), "empty range");
         let span = (range.end - range.start).as_nanos();
-        let random = self.next_lim(span);
+        let random = self.next_lim_u128(span);
         range.start + from_nanos(random)
     }
 }

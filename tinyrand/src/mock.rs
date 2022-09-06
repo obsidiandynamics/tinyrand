@@ -25,6 +25,13 @@ pub struct Mock<D: FnMut(&State) -> u64> {
 
 impl<D: FnMut(&State) -> u64> Mock<D> {
     /// Creates a new mock with the supplied delegate closure.
+    ///
+    /// # Examples
+    /// ```
+    /// use tinyrand::{Mock, Rand};
+    /// let mut mock = Mock::new(|_| 42);
+    /// assert_eq!(42, mock.next_u64());
+    /// ```
     pub fn new(delegate: D) -> Self {
         Self {
             state: State::default(),

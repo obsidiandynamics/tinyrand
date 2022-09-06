@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::thread;
 use std::time::Duration;
-use tinyrand::{Probability, Rand, RandLim, RandRange, StdRand};
+use tinyrand::{Probability, Rand, RandRange, StdRand};
 
 fn main() {
     next_u64();
@@ -32,7 +32,7 @@ fn next_u128() {
 fn next_lim() {
     const N: u64 = 42;
     let mut rand = StdRand::default();
-    let num = rand.next_lim(N);
+    let num = rand.next_lim_u64(N);
     assert!(num < N);
     println!("generated {num}");
 }
