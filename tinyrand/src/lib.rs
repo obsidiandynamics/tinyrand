@@ -5,14 +5,14 @@
 
 pub mod counter;
 pub mod duration;
-pub mod mock;
+pub mod mock_support;
 pub mod xorshift;
 pub mod wyrand;
 
 pub use counter::Counter;
 pub use wyrand::Wyrand;
 pub use xorshift::Xorshift;
-pub use mock::RefCellExt;
+pub use mock_support::RefCellExt;
 
 use core::ops::Range;
 
@@ -359,6 +359,9 @@ impl<R: Rand> RandRange<usize> for R {
 
 #[cfg(test)]
 extern crate alloc;
+
+#[cfg(test)]
+pub(crate) mod mock;
 
 #[cfg(test)]
 mod tests;

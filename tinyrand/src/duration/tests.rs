@@ -3,7 +3,7 @@ use crate::{Rand, RandRange};
 use alloc::vec;
 use core::ops::Range;
 use core::time::Duration;
-use crate::mock::{__fixed, Mock};
+use crate::mock::{fixed, TestMock};
 
 #[test]
 fn duration_from_nanos_reversible() {
@@ -105,6 +105,6 @@ pub fn random_duration(mut rand: impl Rand) {
 #[test]
 #[should_panic(expected="empty range")]
 fn empty_duration_range() {
-    let mut rand = Mock::new(__fixed(0));
+    let mut rand = TestMock::new(fixed(0));
     rand.next_range(Duration::ZERO..Duration::ZERO);
 }

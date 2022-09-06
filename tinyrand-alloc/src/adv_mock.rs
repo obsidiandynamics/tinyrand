@@ -1,8 +1,9 @@
-//! Advanced mock RNG for testing.
+//! Mock RNG for testing.
 
 use alloc::boxed::Box;
 use alloc::rc::Rc;
 use core::cell::RefCell;
+use core::ops::Range;
 use tinyrand::{Probability, Rand};
 
 /// Mock delegate for [`Rand::next_u128`].
@@ -66,14 +67,14 @@ impl<'a> Rand for Surrogate<'a> {
 }
 
 // Mock RNG, containing invocation state and delegate closures.
-pub struct AdvMock {
+pub struct Mock {
     state: State,
     next_u128_delegate: NextU128,
     next_bool_delegate: NextBool,
     next_lim_u128_delegate: NextLim,
 }
 
-impl Default for AdvMock {
+impl Default for Mock {
     fn default() -> Self {
         Self {
             state: State::default(),
@@ -86,7 +87,7 @@ impl Default for AdvMock {
     }
 }
 
-impl AdvMock {
+impl Mock {
     /// Assigns a [`Rand::next_u128`] delegate to the mock. I.e., when the [`Rand::next_u128`]
     /// method is invoked on the mock (directly, or via another method), it will delegate to
     /// the given closure.
@@ -94,8 +95,8 @@ impl AdvMock {
     /// # Examples
     /// ```
     /// use tinyrand::Rand;
-    /// use tinyrand_alloc::AdvMock;
-    /// let mut mock = AdvMock::default()
+    /// use tinyrand_alloc::Mock;
+    /// let mut mock = Mock::default()
     ///     .with_next_u128(|_| 42);
     /// assert_eq!(42, mock.next_usize());
     /// assert_eq!(42, mock.next_u64());
@@ -113,8 +114,8 @@ impl AdvMock {
     /// # Examples
     /// ```
     /// use tinyrand::{Probability, Rand};
-    /// use tinyrand_alloc::AdvMock;
-    /// let mut mock = AdvMock::default()
+    /// use tinyrand_alloc::Mock;
+    /// let mut mock = Mock::default()
     ///     .with_next_bool(|_, _| true);
     /// assert!(mock.next_bool(Probability::new(0.01)));
     /// ```
@@ -134,8 +135,8 @@ impl AdvMock {
     /// # Examples
     /// ```
     /// use tinyrand::{Rand, RandRange};
-    /// use tinyrand_alloc::AdvMock;
-    /// let mut mock = AdvMock::default()
+    /// use tinyrand_alloc::Mock;
+    /// let mut mock = Mock::default()
     ///     .with_next_lim_u128(|_, _| 17);
     /// assert_eq!(17, mock.next_lim_u64(66));
     /// assert_eq!(27, mock.next_range(10..100u16));
@@ -155,7 +156,7 @@ impl AdvMock {
     }
 }
 
-impl Rand for AdvMock {
+impl Rand for Mock {
     fn next_u64(&mut self) -> u64 {
         self.next_u128() as u64
     }
@@ -208,35 +209,43 @@ impl Rand for AdvMock {
     }
 }
 
+/// A pre-canned delegate that counts in the given range, wrapping around when it reaches
+/// the end.
+///
+/// # Examples
+/// ```
+/// use tinyrand::Rand;
+/// use tinyrand_alloc::{Mock, counter};
+///
+/// let mut mock = Mock::default().with_next_u128(counter(5..8));
+/// assert_eq!(5, mock.next_u64());
+/// assert_eq!(6, mock.next_u64());
+/// assert_eq!(7, mock.next_u64());
+/// assert_eq!(5, mock.next_u64());
+/// ```
+pub fn counter(range: Range<u128>) -> impl FnMut(&State) -> u128 {
+    let mut current = range.start;
+    move |_| {
+        let c = current;
+        let next = current + 1;
+        current = if next == range.end { range.start } else { next };
+        c
+    }
+}
+
 /// A pre-canned delegate that always parrots a given value.
 ///
 /// # Examples
 /// ```
 /// use tinyrand::Rand;
-/// use tinyrand_alloc::{AdvMock, fixed};
-/// let mut mock = AdvMock::default().with_next_u128(fixed(42));
+/// use tinyrand_alloc::{Mock, fixed};
+///
+/// let mut mock = Mock::default().with_next_u128(fixed(42));
 /// assert_eq!(42, mock.next_u64());
 /// assert_eq!(42, mock.next_u64());
 /// ```
 pub fn fixed(val: u128) -> impl FnMut(&State) -> u128 {
-    tinyrand::mock::__fixed(val)
-}
-
-/// A pre-canned delegate that parrots the value contained in the given cell.
-///
-/// # Examples
-/// ```
-/// use std::cell::RefCell;
-/// use tinyrand::Rand;
-/// use tinyrand_alloc::{AdvMock, echo};
-/// let cell = RefCell::default();
-/// let mut mock = AdvMock::default().with_next_u128(echo(&cell));
-/// assert_eq!(0, mock.next_u64());
-/// cell.set(42);
-/// assert_eq!(42, mock.next_u64());
-/// ```
-pub fn echo(cell: &RefCell<u128>) -> impl FnMut(&State) -> u128 + '_ {
-    |_| *cell.borrow()
+    move |_| val
 }
 
 /// A pre-canned delegate that parrots the value on the heap.
@@ -245,16 +254,16 @@ pub fn echo(cell: &RefCell<u128>) -> impl FnMut(&State) -> u128 + '_ {
 /// ```
 /// use std::cell::RefCell;
 /// use std::rc::Rc;
-/// use tinyrand::Rand;
-/// use tinyrand::mock::{__counter, __echo, Mock, RefCellExt};
-/// use tinyrand_alloc::echo_heap;
+/// use tinyrand::{Rand, RefCellExt};
+/// use tinyrand_alloc::{Mock, echo};
+///
 /// let cell = Rc::new(RefCell::default());
-/// let mut mock = Mock::new(echo_heap(cell.clone()));
+/// let mut mock = Mock::default().with_next_u128(echo(cell.clone()));
 /// assert_eq!(0, mock.next_u64());
 /// cell.set(42);
 /// assert_eq!(42, mock.next_u64());
 /// ```
-pub fn echo_heap(cell: Rc<RefCell<u128>>) -> impl FnMut(&State) -> u128 {
+pub fn echo(cell: Rc<RefCell<u128>>) -> impl FnMut(&State) -> u128 {
     move |_| *cell.borrow()
 }
 

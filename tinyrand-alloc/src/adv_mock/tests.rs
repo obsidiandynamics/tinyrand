@@ -1,13 +1,11 @@
-use crate::adv_mock::AdvMock;
-use crate::echo_heap;
+use crate::{Mock, counter, echo, fixed};
 use alloc::rc::Rc;
 use core::cell::RefCell;
-use tinyrand::mock::{__counter, __fixed, RefCellExt};
-use tinyrand::{Probability, Rand, RandLim};
+use tinyrand::{Probability, Rand, RandLim, RefCellExt};
 
 #[test]
 fn mock_counter() {
-    let mut mock = AdvMock::default().with_next_u128(__counter(5..8));
+    let mut mock = Mock::default().with_next_u128(counter(5..8));
     assert_eq!(0, mock.state().next_u128_invocations());
     assert_eq!(5, mock.next_u16());
     assert_eq!(1, mock.state().next_u128_invocations());
@@ -23,8 +21,8 @@ fn mock_counter() {
 
 #[test]
 fn next_bool() {
-    let mut mock = AdvMock::default()
-        .with_next_u128(__fixed(0))
+    let mut mock = Mock::default()
+        .with_next_u128(fixed(0))
         .with_next_bool(|_, _| true);
     assert_eq!(0, mock.state().next_bool_invocations());
     assert!(mock.next_bool(Probability::new(0.0))); // absurd but true (because of mock)
@@ -34,8 +32,8 @@ fn next_bool() {
     assert!(mock.next_bool(Probability::new(1.0)));
     assert_eq!(3, mock.state().next_bool_invocations());
 
-    let mut mock = AdvMock::default()
-        .with_next_u128(__fixed(0))
+    let mut mock = Mock::default()
+        .with_next_u128(fixed(0))
         .with_next_bool(|_, _| false);
     assert_eq!(0, mock.state().next_bool_invocations());
     assert!(!mock.next_bool(Probability::new(1.0))); // again, only possible thanks to mocking
@@ -45,7 +43,7 @@ fn next_bool() {
 #[test]
 fn next_bool_delegates_by_default() {
     let cell = Rc::new(RefCell::default());
-    let mut mock = AdvMock::default().with_next_u128(echo_heap(cell.clone()));
+    let mut mock = Mock::default().with_next_u128(echo(cell.clone()));
     assert_eq!(0, mock.state().next_bool_invocations());
     assert_eq!(0, mock.state().next_u128_invocations());
     assert!(!mock.next_bool(Probability::new(0.0)));
@@ -64,8 +62,8 @@ fn next_bool_delegates_by_default() {
 
 #[test]
 fn next_lim() {
-    let mut mock = AdvMock::default()
-        .with_next_u128(__fixed(0))
+    let mut mock = Mock::default()
+        .with_next_u128(fixed(0))
         .with_next_lim_u128(|_, lim| lim / 2);
     assert_eq!(0, mock.state().next_lim_u128_invocations());
     assert_eq!(21, mock.next_lim_u16(42));
@@ -86,7 +84,7 @@ fn next_lim() {
 #[test]
 fn next_lim_delegates_by_default() {
     let cell = Rc::new(RefCell::default());
-    let mut mock = AdvMock::default().with_next_u128(echo_heap(cell.clone()));
+    let mut mock = Mock::default().with_next_u128(echo(cell.clone()));
     assert_eq!(0, mock.state().next_lim_u128_invocations());
     assert_eq!(0, mock.next_lim_u16(1));
     assert_eq!(1, mock.state().next_lim_u128_invocations());
@@ -105,7 +103,7 @@ fn next_lim_delegates_by_default() {
 
 #[test]
 fn state_from_surrogate() {
-    let mut mock = AdvMock::default().with_next_bool(|surrogate, _| {
+    let mut mock = Mock::default().with_next_bool(|surrogate, _| {
         assert_eq!(0, surrogate.state().next_bool_invocations());
         true
     });
