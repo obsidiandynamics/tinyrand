@@ -2,7 +2,7 @@ use crate::{cutoff_u128, Probability, Rand, RandLim, RandRange, RefCellExt};
 use alloc::{format, vec};
 use core::cell::RefCell;
 use core::ops::Range;
-use crate::mock::{counter, echo, fixed, TestMock};
+use crate::test_mock::{counter, echo, fixed, TestMock};
 
 pub fn next_types(mut rand: impl Rand) {
     assert_ne!(0, rand.next_u16());

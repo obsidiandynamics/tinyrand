@@ -8,10 +8,10 @@ Lightweight RNG specification and several ultrafast implementations for Rust. `t
 ![no_std](https://img.shields.io/badge/linking-no__std-9cf?style=flat-square)
 
 # Why `tinyrand`?
-* It's very small and doesn't need `std`, meaning it's embeddable. It can run on microcontrollers and bare-metal (no OS) environments.
-* It's very fast. Faster than others. It comes bundled with [Xorshift](https://en.wikipedia.org/wiki/Xorshift) and [Wyrand](https://github.com/wangyi-fudan/wyhash/blob/master/Modern%20Non-Cryptographic%20Hash%20Function%20and%20Pseudorandom%20Number%20Generator.pdf).
-* The RNG behaviour is concisely specified as a handful of traits, independent of implementations. It makes it easy to swap implementations.
-* It comes with [`Mock`](https://docs.rs/tinyrand/latest/tinyrand/mock/index.html) for testing code that depends on random numbers. That's if you care about code coverage.
+* It's very small and doesn't need `std`, meaning it's embeddable — it runs on microcontrollers and bare-metal (no OS) environments.
+* It's very fast. It comes bundled with [Xorshift](https://en.wikipedia.org/wiki/Xorshift) and [Wyrand](https://github.com/wangyi-fudan/wyhash/blob/master/Modern%20Non-Cryptographic%20Hash%20Function%20and%20Pseudorandom%20Number%20Generator.pdf).
+* The RNG behaviour is concisely specified as a handful of traits, independent of the underlying implementations. It makes it easy to swap implementations.
+* It comes with [`Mock`](https://docs.rs/tinyrand-alloc/latest/tinyrand/mock/index.html) for testing code that depends on random numbers. That's if you care about code coverage.
 
 # Performance
 Below is a comparison of several notable RNGs.

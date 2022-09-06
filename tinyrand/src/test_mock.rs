@@ -24,7 +24,7 @@ pub struct TestMock<D: FnMut(&State) -> u64> {
 }
 
 impl<D: FnMut(&State) -> u64> TestMock<D> {
-    /// Creates a new mock with the supplied delegate closure.
+    /// Creates a new test_mock with the supplied delegate closure.
     pub fn new(delegate: D) -> Self {
         Self {
             state: State::default(),
@@ -32,7 +32,7 @@ impl<D: FnMut(&State) -> u64> TestMock<D> {
         }
     }
 
-    /// Obtains the underlying mock state.
+    /// Obtains the underlying test_mock state.
     pub fn state(&self) -> &State {
         &self.state
     }

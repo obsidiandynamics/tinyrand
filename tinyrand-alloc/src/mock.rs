@@ -40,7 +40,7 @@ impl State {
     }
 }
 
-/// Encapsulates the state of the mock and a reference to the [`NextU64`] delegate, so
+/// Encapsulates the state of the mock and a reference to the [`NextU128`] delegate, so
 /// that it can be invoked from inside the mock by, for example, another delegate.
 pub struct Surrogate<'a> {
     state: &'a mut State,

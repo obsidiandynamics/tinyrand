@@ -3,7 +3,7 @@ use crate::{Rand, RandRange};
 use alloc::vec;
 use core::ops::Range;
 use core::time::Duration;
-use crate::mock::{fixed, TestMock};
+use crate::test_mock::{fixed, TestMock};
 
 #[test]
 fn duration_from_nanos_reversible() {

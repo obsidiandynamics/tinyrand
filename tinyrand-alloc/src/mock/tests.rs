@@ -25,7 +25,7 @@ fn next_bool() {
         .with_next_u128(fixed(0))
         .with_next_bool(|_, _| true);
     assert_eq!(0, mock.state().next_bool_invocations());
-    assert!(mock.next_bool(Probability::new(0.0))); // absurd but true (because of mock)
+    assert!(mock.next_bool(Probability::new(0.0))); // absurd but true (because of test_mock)
     assert_eq!(1, mock.state().next_bool_invocations());
     assert!(mock.next_bool(Probability::new(0.5)));
     assert_eq!(2, mock.state().next_bool_invocations());

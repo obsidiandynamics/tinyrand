@@ -2,7 +2,7 @@ use alloc::sync::Arc;
 use core::cell::RefCell;
 use core::sync::atomic::{AtomicU64, Ordering};
 use crate::{Rand, RefCellExt};
-use crate::mock::{counter, echo, fixed, Next, TestMock};
+use crate::test_mock::{counter, echo, fixed, Next, TestMock};
 
 #[test]
 fn implements_next() {

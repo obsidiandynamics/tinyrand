@@ -361,7 +361,7 @@ impl<R: Rand> RandRange<usize> for R {
 extern crate alloc;
 
 #[cfg(test)]
-pub(crate) mod mock;
+pub(crate) mod test_mock;
 
 #[cfg(test)]
 mod tests;
