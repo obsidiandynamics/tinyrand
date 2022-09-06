@@ -58,19 +58,7 @@ impl<D: FnMut(&State) -> u64> Rand for Mock<D> {
 }
 
 /// A pre-canned delegate that counts in the given range, wrapping around when it reaches
-/// the end.
-///
-/// # Examples
-/// ```
-/// use tinyrand::Rand;
-/// use tinyrand::mock::{counter, Mock};
-/// let mut mock = Mock::new(counter(5..8));
-/// assert_eq!(5, mock.next_u64());
-/// assert_eq!(6, mock.next_u64());
-/// assert_eq!(7, mock.next_u64());
-/// assert_eq!(5, mock.next_u64());
-/// ```
-pub fn counter<T, S>(range: Range<T>) -> impl FnMut(&S) -> T
+pub fn __counter<T, S>(range: Range<T>) -> impl FnMut(&S) -> T
     where
         T: Copy + Next + Eq
 {
@@ -102,16 +90,7 @@ impl Next for u128 {
 }
 
 /// A pre-canned delegate that always parrots a given value.
-///
-/// # Examples
-/// ```
-/// use tinyrand::Rand;
-/// use tinyrand::mock::{fixed, Mock};
-/// let mut mock = Mock::new(fixed(42));
-/// assert_eq!(42, mock.next_u64());
-/// assert_eq!(42, mock.next_u64());
-/// ```
-pub fn fixed<T: Copy, S>(val: T) -> impl FnMut(&S) -> T {
+pub fn __fixed<T: Copy, S>(val: T) -> impl FnMut(&S) -> T {
     move |_| val
 }
 
@@ -133,19 +112,7 @@ impl<T: Copy> RefCellExt<T> for RefCell<T> {
 }
 
 /// A pre-canned delegate that parrots the value contained in the given cell.
-///
-/// # Examples
-/// ```
-/// use std::cell::RefCell;
-/// use tinyrand::Rand;
-/// use tinyrand::mock::{counter, echo, Mock, RefCellExt};
-/// let cell = RefCell::default();
-/// let mut mock = Mock::new(echo(&cell));
-/// assert_eq!(0, mock.next_u64());
-/// cell.set(42);
-/// assert_eq!(42, mock.next_u64());
-/// ```
-pub fn echo<T: Copy, S>(cell: &RefCell<T>) -> impl FnMut(&S) -> T + '_ {
+pub fn __echo<T: Copy, S>(cell: &RefCell<T>) -> impl FnMut(&S) -> T + '_ {
     |_| *cell.borrow()
 }
 

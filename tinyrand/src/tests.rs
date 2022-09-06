@@ -2,7 +2,7 @@ use crate::{cutoff_u128, Probability, Rand, RandLim, RandRange};
 use alloc::{format, vec};
 use core::cell::RefCell;
 use core::ops::Range;
-use crate::mock::{echo, counter, fixed, RefCellExt, Mock};
+use crate::mock::{__echo, __counter, __fixed, RefCellExt, Mock};
 
 pub fn next_types(mut rand: impl Rand) {
     assert_ne!(0, rand.next_u16());
@@ -14,7 +14,7 @@ pub fn next_types(mut rand: impl Rand) {
 
 #[test]
 fn next_types_mock() {
-    let mut mock = Mock::new(fixed(0x1234_5678_9ABC_DEF0));
+    let mut mock = Mock::new(__fixed(0x1234_5678_9ABC_DEF0));
     assert_eq!(0xDEF0, mock.next_u16());
     assert_eq!(0x9ABC_DEF0, mock.next_u32());
     assert_eq!(0x1234_5678_9ABC_DEF0, mock.next_u64());
@@ -24,14 +24,14 @@ fn next_types_mock() {
 
 #[test]
 fn gen_u128_from_u64() {
-    let mut mock = Mock::new(counter(1..3));
+    let mut mock = Mock::new(__counter(1..3));
     let next = mock.next_u128();
     assert_eq!(0x0000_0000_0000_0001_0000_0000_0000_0002, next);
 }
 
 #[test]
 fn lim_u16() {
-    let mut mock = Mock::new(counter(u64::from(u16::MAX >> 1)..u64::from(u16::MAX)));
+    let mut mock = Mock::new(__counter(u64::from(u16::MAX >> 1)..u64::from(u16::MAX)));
     for lim in (u16::MAX >> 1)..(u16::MAX >> 1) + 100 {
         let _ = mock.next_lim(lim);
     }
@@ -39,7 +39,7 @@ fn lim_u16() {
 
 #[test]
 fn lim_u32() {
-    let mut mock = Mock::new(counter(u64::from(u32::MAX >> 1)..u64::from(u32::MAX)));
+    let mut mock = Mock::new(__counter(u64::from(u32::MAX >> 1)..u64::from(u32::MAX)));
     for lim in (u32::MAX >> 1)..(u32::MAX >> 1) + 100 {
         let _ = mock.next_lim(lim);
     }
@@ -47,7 +47,7 @@ fn lim_u32() {
 
 #[test]
 fn lim_u64() {
-    let mut mock = Mock::new(counter(u64::MAX >> 1..u64::MAX));
+    let mut mock = Mock::new(__counter(u64::MAX >> 1..u64::MAX));
     for lim in (u64::MAX >> 1)..(u64::MAX >> 1) + 100 {
         let _ = mock.next_lim(lim);
     }
@@ -55,7 +55,7 @@ fn lim_u64() {
 
 #[test]
 fn lim_u128_small() {
-    let mut mock = Mock::new(counter(u64::MAX -17..u64::MAX));
+    let mut mock = Mock::new(__counter(u64::MAX -17..u64::MAX));
     for lim in 1..13u128 {
         let _ = mock.next_lim(lim);
     }
@@ -63,7 +63,7 @@ fn lim_u128_small() {
 
 #[test]
 fn lim_u128_large() {
-    let mut mock = Mock::new(counter(u64::MAX -17..u64::MAX));
+    let mut mock = Mock::new(__counter(u64::MAX -17..u64::MAX));
     for lim in u64::MAX as u128..u64::MAX as u128 + 13u128 {
         let _ = mock.next_lim(lim);
     }
@@ -80,13 +80,13 @@ pub fn lim_types_max(mut rand: impl Rand) {
 #[test]
 #[should_panic(expected="zero limit")]
 fn zero_lim_64() {
-    Mock::new(fixed(0)).next_lim(0u64);
+    Mock::new(__fixed(0)).next_lim(0u64);
 }
 
 #[test]
 #[should_panic(expected="zero limit")]
 fn zero_lim_128() {
-    Mock::new(fixed(0)).next_lim(0u128);
+    Mock::new(__fixed(0)).next_lim(0u128);
 }
 
 pub fn range_types_max(mut rand: impl Rand) {
@@ -100,14 +100,14 @@ pub fn range_types_max(mut rand: impl Rand) {
 #[test]
 #[should_panic(expected="empty range")]
 fn empty_u64_range() {
-    let mut rand = Mock::new(fixed(0));
+    let mut rand = Mock::new(__fixed(0));
     rand.next_range(0..0u64);
 }
 
 #[test]
 #[should_panic(expected="empty range")]
 fn empty_u128_range() {
-    let mut rand = Mock::new(fixed(0));
+    let mut rand = Mock::new(__fixed(0));
     rand.next_range(0..0u128);
 }
 
@@ -248,7 +248,7 @@ fn next_bool() {
     // while p(1.0) should always evaluate to true
 
     let cell = RefCell::default();
-    let mut rand = Mock::new(echo(&cell));
+    let mut rand = Mock::new(__echo(&cell));
     cell.set(0);
     assert!(!rand.next_bool(0.0.into()));
     assert!(rand.next_bool(f64::EPSILON.into()));

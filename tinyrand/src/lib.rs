@@ -12,6 +12,7 @@ pub mod wyrand;
 pub use counter::Counter;
 pub use wyrand::Wyrand;
 pub use xorshift::Xorshift;
+pub use mock::RefCellExt;
 
 use core::ops::Range;
 

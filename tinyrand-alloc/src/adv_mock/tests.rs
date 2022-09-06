@@ -2,12 +2,12 @@ use crate::adv_mock::AdvMock;
 use crate::echo_heap;
 use alloc::rc::Rc;
 use core::cell::RefCell;
-use tinyrand::mock::{counter, fixed, RefCellExt};
+use tinyrand::mock::{__counter, __fixed, RefCellExt};
 use tinyrand::{Probability, Rand, RandLim};
 
 #[test]
 fn mock_counter() {
-    let mut mock = AdvMock::default().with_next_u128(counter(5..8));
+    let mut mock = AdvMock::default().with_next_u128(__counter(5..8));
     assert_eq!(0, mock.state().next_u128_invocations());
     assert_eq!(5, mock.next_u16());
     assert_eq!(1, mock.state().next_u128_invocations());
@@ -24,7 +24,7 @@ fn mock_counter() {
 #[test]
 fn next_bool() {
     let mut mock = AdvMock::default()
-        .with_next_u128(fixed(0))
+        .with_next_u128(__fixed(0))
         .with_next_bool(|_, _| true);
     assert_eq!(0, mock.state().next_bool_invocations());
     assert!(mock.next_bool(Probability::new(0.0))); // absurd but true (because of mock)
@@ -35,7 +35,7 @@ fn next_bool() {
     assert_eq!(3, mock.state().next_bool_invocations());
 
     let mut mock = AdvMock::default()
-        .with_next_u128(fixed(0))
+        .with_next_u128(__fixed(0))
         .with_next_bool(|_, _| false);
     assert_eq!(0, mock.state().next_bool_invocations());
     assert!(!mock.next_bool(Probability::new(1.0))); // again, only possible thanks to mocking
@@ -65,7 +65,7 @@ fn next_bool_delegates_by_default() {
 #[test]
 fn next_lim() {
     let mut mock = AdvMock::default()
-        .with_next_u128(fixed(0))
+        .with_next_u128(__fixed(0))
         .with_next_lim_u128(|_, lim| lim / 2);
     assert_eq!(0, mock.state().next_lim_u128_invocations());
     assert_eq!(21, mock.next_lim_u16(42));
