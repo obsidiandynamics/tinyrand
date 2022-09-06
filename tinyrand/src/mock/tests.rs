@@ -45,19 +45,19 @@ fn invocations() {
     let mut mock = {
         let invocations = invocations.clone();
         Mock::new(move |state| {
-            invocations.store(state.invocations(), Ordering::Relaxed);
+            invocations.store(state.next_u64_invocations(), Ordering::Relaxed);
             state.invocations * 100
         })
     };
-    assert_eq!(0, mock.state.invocations());
+    assert_eq!(0, mock.state.next_u64_invocations());
     assert_eq!(0, invocations.load(Ordering::Relaxed));
 
     assert_eq!(0, mock.next_u64());
-    assert_eq!(1, mock.state.invocations());
+    assert_eq!(1, mock.state.next_u64_invocations());
     assert_eq!(0, invocations.load(Ordering::Relaxed));
 
     assert_eq!(100, mock.next_u64());
-    assert_eq!(2, mock.state.invocations());
+    assert_eq!(2, mock.state.next_u64_invocations());
     assert_eq!(1, invocations.load(Ordering::Relaxed));
 }
 

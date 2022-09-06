@@ -12,7 +12,7 @@ pub struct State {
 
 impl State {
     /// Obtains the number of invocations of the [`Rand::next_u64`] method.
-    pub fn invocations(&self) -> u64 {
+    pub fn next_u64_invocations(&self) -> u64 {
         self.invocations
     }
 }

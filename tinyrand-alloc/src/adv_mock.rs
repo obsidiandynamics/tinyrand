@@ -87,6 +87,15 @@ impl Default for AdvMock {
 impl AdvMock {
     /// Assigns a [`Rand::next_u64`] delegate to the mock. I.e., when the [`Rand::next_u64`]
     /// method is invoked on the mock, it will delegate to the given closure.
+    ///
+    /// # Examples
+    /// ```
+    /// use tinyrand::Rand;
+    /// use tinyrand_alloc::AdvMock;
+    /// let mut mock = AdvMock::default()
+    ///     .with_next_u64(|_| 42);
+    /// assert_eq!(42, mock.next_u64());
+    /// ```
     #[must_use]
     pub fn with_next_u64(mut self, delegate: impl FnMut(&State) -> u64 + 'static) -> Self {
         self.next_u64_delegate = Box::new(delegate);
@@ -95,6 +104,15 @@ impl AdvMock {
 
     /// Assigns a [`Rand::next_bool`] delegate to the mock. I.e., when the [`Rand::next_bool`]
     /// method is invoked on the mock, it will delegate to the given closure.
+    ///
+    /// # Examples
+    /// ```
+    /// use tinyrand::{Probability, Rand};
+    /// use tinyrand_alloc::AdvMock;
+    /// let mut mock = AdvMock::default()
+    ///     .with_next_bool(|_, _| true);
+    /// assert!(mock.next_bool(Probability::new(0.01)));
+    /// ```
     #[must_use]
     pub fn with_next_bool(mut self, delegate: impl FnMut(Surrogate, Probability) -> bool + 'static) -> Self {
         self.next_bool_delegate = Box::new(delegate);
@@ -102,7 +120,18 @@ impl AdvMock {
     }
 
     /// Assigns a [`Rand::next_lim_u128`] delegate to the mock. I.e., when the [`Rand::next_lim_u128`]
-    /// method is invoked on the mock, it will delegate to the given closure.
+    /// method is invoked on the mock, it will delegate to the given closure. This delegate can be
+    /// used to effectively mock `Rand::next_lim` and `Rand::next_range` methods.
+    ///
+    /// # Examples
+    /// ```
+    /// use tinyrand::{Rand, RandRange};
+    /// use tinyrand_alloc::AdvMock;
+    /// let mut mock = AdvMock::default()
+    ///     .with_next_lim_u128(|_, _| 17);
+    /// assert_eq!(17, mock.next_lim_u64(66));
+    /// assert_eq!(27, mock.next_range(10..100u16));
+    /// ```
     #[must_use]
     pub fn with_next_lim_u128(mut self, delegate: impl FnMut(Surrogate, u128) -> u128 + 'static) -> Self {
         self.next_lim_u128_delegate = Box::new(delegate);
