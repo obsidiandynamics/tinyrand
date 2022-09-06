@@ -70,13 +70,33 @@ impl<D: FnMut(&State) -> u64> Rand for Mock<D> {
 /// assert_eq!(7, mock.next_u64());
 /// assert_eq!(5, mock.next_u64());
 /// ```
-pub fn counter<S>(range: Range<u64>) -> impl FnMut(&S) -> u64 {
+pub fn counter<T, S>(range: Range<T>) -> impl FnMut(&S) -> T
+    where
+        T: Copy + Next + Eq
+{
     let mut current = range.start;
     move |_| {
         let c = current;
-        let next = current + 1;
+        let next = current.next();
         current = if next == range.end { range.start } else { next };
         c
+    }
+}
+
+/// Something that has a successor value.
+pub trait Next {
+    fn next(self) -> Self;
+}
+
+impl Next for u64 {
+    fn next(self) -> Self {
+        self + 1
+    }
+}
+
+impl Next for u128 {
+    fn next(self) -> Self {
+        self + 1
     }
 }
 
@@ -90,7 +110,7 @@ pub fn counter<S>(range: Range<u64>) -> impl FnMut(&S) -> u64 {
 /// assert_eq!(42, mock.next_u64());
 /// assert_eq!(42, mock.next_u64());
 /// ```
-pub fn fixed<S>(val: u64) -> impl FnMut(&S) -> u64 {
+pub fn fixed<T: Copy, S>(val: T) -> impl FnMut(&S) -> T {
     move |_| val
 }
 
@@ -124,7 +144,7 @@ impl<T: Copy> RefCellExt<T> for RefCell<T> {
 /// cell.set(42);
 /// assert_eq!(42, mock.next_u64());
 /// ```
-pub fn echo<S>(cell: &RefCell<u64>) -> impl FnMut(&S) -> u64 + '_ {
+pub fn echo<T: Copy, S>(cell: &RefCell<T>) -> impl FnMut(&S) -> T + '_ {
     |_| *cell.borrow()
 }
 
