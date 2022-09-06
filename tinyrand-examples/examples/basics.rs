@@ -51,7 +51,8 @@ fn next_bool() {
     let p = Probability::new(0.55); // a slightly weighted coin
     for _ in 0..10 {
         if rand.next_bool(p) {
-            println!("heads"); // expect to see more heads in the (sufficiently) long run
+            // expect to see more heads in the (sufficiently) long run
+            println!("heads");
         } else {
             println!("tails");
         }

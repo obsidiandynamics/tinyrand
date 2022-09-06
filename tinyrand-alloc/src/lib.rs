@@ -5,3 +5,5 @@
 extern crate alloc;
 
 pub mod adv_mock;
+
+pub use adv_mock::*;

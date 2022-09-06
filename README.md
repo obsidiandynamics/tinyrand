@@ -72,7 +72,8 @@ let mut rand = StdRand::default();
 let p = Probability::new(0.55); // a slightly weighted coin
 for _ in 0..10 {
     if rand.next_bool(p) {
-        println!("heads"); // expect to see more heads in the (sufficiently) long run
+        // expect to see more heads in the (sufficiently) long run
+        println!("heads"); 
     } else {
         println!("tails");
     }
@@ -109,6 +110,8 @@ let mut rand = StdRand::seed(seed);
 let num = rand.next_u64();
 println!("generated {num}");
 ```
+
+You might consider using [`getrandom`](https://lib.rs/crates/getrandom), which is a cross-platform method for retrieving entropy data.
 
 If one doesn't care about `no_std`, they shouldn't be bound by its limitations. To seed from the system clock, you can opt in to `std`:
 

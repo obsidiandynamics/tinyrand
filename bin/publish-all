@@ -41,4 +41,6 @@ echo "Publishing all packages for $project ${new_version}"
 
 cargo publish -p tinyrand
 await tinyrand
+cargo publish -p tinyrand-alloc
+await tinyrand-alloc
 cargo publish -p tinyrand-std

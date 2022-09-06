@@ -4,7 +4,7 @@ use core::cell::{Ref, RefCell, RefMut};
 use core::ops::{Range};
 use crate::Rand;
 
-/// Mock state.
+/// Mock invocation state.
 #[derive(Default)]
 pub struct State {
     invocations: u64,
@@ -62,7 +62,7 @@ impl<D: FnMut(&State) -> u64> Rand for Mock<D> {
 /// assert_eq!(7, mock.next_u64());
 /// assert_eq!(5, mock.next_u64());
 /// ```
-pub fn counter(range: Range<u64>) -> impl FnMut(&State) -> u64 {
+pub fn counter<S>(range: Range<u64>) -> impl FnMut(&S) -> u64 {
     let mut current = range.start;
     move |_| {
         let c = current;
@@ -82,7 +82,7 @@ pub fn counter(range: Range<u64>) -> impl FnMut(&State) -> u64 {
 /// assert_eq!(42, mock.next_u64());
 /// assert_eq!(42, mock.next_u64());
 /// ```
-pub fn fixed(val: u64) -> impl FnMut(&State) -> u64 {
+pub fn fixed<S>(val: u64) -> impl FnMut(&S) -> u64 {
     move |_| val
 }
 
@@ -147,7 +147,7 @@ impl U64Cell {
 /// cell.set(42);
 /// assert_eq!(42, mock.next_u64());
 /// ```
-pub fn echo(cell: &U64Cell) -> impl FnMut(&State) -> u64 + '_ {
+pub fn echo<S>(cell: &U64Cell) -> impl FnMut(&S) -> u64 + '_ {
     |_| *cell.borrow()
 }
 
