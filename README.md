@@ -26,7 +26,7 @@ Below is a comparison of several notable RNGs.
 TL;DR: `tinyrand` is almost 3x faster than `fastrand` and more than 6x faster than `rand`.
 
 # Statistical properties
-It's impossible to tell for certain whether a PRNG is good; the answer is probabilistic. `tinyrand` (both Wyrand and Xorshift) algorithms stand up well against the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) battery of tests. (Tested on 30.8 billion samples.) This means `tinyrand` produces numbers that appear sufficiently random and is likely fit for use in most applications.
+It's impossible to tell for certain whether a PRNG is good; the answer is probabilistic. `tinyrand` (both Wyrand and Xorshift) algorithms stand up well against the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) barrage of tests. (Tested on 30.8 billion samples.) This means `tinyrand` produces numbers that appear sufficiently random and is likely fit for use in most applications.
 
 `tinyrand` algorithms are not cryptographically secure, meaning it is possible to guess the next random number by observing a sequence of numbers. If you need a CSPRNG, it is strongly suggested that you go with `rand`. CSPRNGs are generally a lot slower and most folks don't need one.
 
@@ -99,7 +99,7 @@ while !condition.has_happened() {
 ## Seeding
 Invoking `Default::default()` on a `Rand` initialises it with a constant seed. This is great for repeatability, but always results in the same run of "random" numbers, which is not what most folks need.
 
-`tinyrand` is a `no_std` crate and, sadly, there is no good, portable way to generate entropy when one cannot make assumptions about the underlying platform. In most applications, one would use a clock, but something as simple as `SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)` mightn't be always available.
+`tinyrand` is a `no_std` crate and, sadly, there is no good, portable way to generate entropy when one cannot make assumptions about the underlying platform. In most applications, one would use a clock, but something as trivial as `SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)` mightn't be always available.
 
 If you have an entropy source at your disposal, you could seed an `Rrnd` as so:
 

@@ -21,6 +21,18 @@ pub type StdRand = Wyrand;
 
 /// A minimal specification of a 64-bit random number generator.
 pub trait Rand {
+    /// Returns the next random `u16`.
+    #[inline(always)]
+    fn next_u16(&mut self) -> u16 {
+        self.next_u64() as u16
+    }
+
+    /// Returns the next random `u32`.
+    #[inline(always)]
+    fn next_u32(&mut self) -> u32 {
+        self.next_u64() as u32
+    }
+
     /// Returns the next random `u64`.
     fn next_u64(&mut self) -> u64;
 
@@ -28,6 +40,30 @@ pub trait Rand {
     #[inline(always)]
     fn next_u128(&mut self) -> u128 {
         u128::from(self.next_u64()) << 64 | u128::from(self.next_u64())
+    }
+
+    #[cfg(target_pointer_width = "16")]
+    #[inline(always)]
+    fn next_usize(&mut self) -> usize {
+        self.next_u16() as usize
+    }
+
+    #[cfg(target_pointer_width = "32")]
+    #[inline(always)]
+    fn next_usize(&mut self) -> usize {
+        self.next_u32() as usize
+    }
+
+    #[cfg(target_pointer_width = "64")]
+    #[inline(always)]
+    fn next_usize(&mut self) -> usize {
+        self.next_u64() as usize
+    }
+
+    #[cfg(target_pointer_width = "128")]
+    #[inline(always)]
+    fn next_usize(&mut self) -> usize {
+        self.next_u128() as usize
     }
 
     /// Returns a `bool` with a probability `p` of being true.

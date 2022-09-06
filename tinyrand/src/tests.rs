@@ -4,10 +4,20 @@ use core::ops::Range;
 use crate::mock::{U64Cell, echo, counter, fixed};
 
 #[test]
+fn next_types() {
+    let mut mock = Mock::new(fixed(0x1234_5678_9ABC_DEF0));
+    assert_eq!(0xDEF0, mock.next_u16());
+    assert_eq!(0x9ABC_DEF0, mock.next_u32());
+    assert_eq!(0x1234_5678_9ABC_DEF0, mock.next_u64());
+    assert_eq!(0x1234_5678_9ABC_DEF0_1234_5678_9ABC_DEF0, mock.next_u128());
+    assert_ne!(0, mock.next_usize());
+}
+
+#[test]
 fn gen_128_bit_from_64() {
     let mut mock = Mock::new(counter(1..3));
     let next = mock.next_u128();
-    assert_eq!(0x0000_0000_0000_0001__0000_0000_0000_0002, next);
+    assert_eq!(0x0000_0000_0000_0001_0000_0000_0000_0002, next);
 }
 
 #[test]
