@@ -40,6 +40,8 @@ cargo add tinyrand
 A `Rand` instance is required to generate numbers. Here, we use `StdRand`, which is an alias for the default/recommended RNG. (Currently set to `Wyrand`, but may change in the future.)
 
 ```rust
+use tinyrand::{Rand, StdRand};
+
 let mut rand = StdRand::default();
 for _ in 0..10 {
     let num = rand.next_u64();
@@ -50,6 +52,8 @@ for _ in 0..10 {
 Similarly, we can generate numbers of other types:
 
 ```rust
+use tinyrand::{Rand, StdRand};
+
 let mut rand = StdRand::default();
 let num = rand.next_u128();
 println!("generated wider {num}");
@@ -58,6 +62,8 @@ println!("generated wider {num}");
 The `next_uXX` methods generate numbers in the entire unsigned range of the specified type. Often, we want a number in a specific range:
 
 ```rust
+use tinyrand::{Rand, StdRand, RandRange};
+
 let mut rand = StdRand::default();
 let tasks = vec!["went to market", "stayed home", "had roast beef", "had none"];
 let random_index = rand.next_range(0..tasks.len());
@@ -68,6 +74,8 @@ println!("This little piggy {random_task}");
 Another common use case is generating `bool`s. We might also want to assign a weighting to the binary outcomes:
 
 ```rust
+use tinyrand::{Rand, StdRand, Probability};
+
 let mut rand = StdRand::default();
 let p = Probability::new(0.55); // a slightly weighted coin
 for _ in 0..10 {
@@ -83,6 +91,11 @@ for _ in 0..10 {
 There are times when we need our thread to sleep for a while, waiting for a condition. When many threads are sleeping, it is generally recommended they back off randomly to avoid a stampede.
 
 ```rust
+use tinyrand::{Rand, StdRand, RandRange};
+use core::time::Duration;
+use std::thread;
+use tinyrand_examples::SomeSpecialCondition;
+
 let mut rand = StdRand::default();
 let condition = SomeSpecialCondition::default();
 let base_sleep_micros = 10;
@@ -105,7 +118,9 @@ Invoking `Default::default()` on a `Rand` initialises it with a constant seed. T
 If you have an entropy source at your disposal, you could seed an `Rrnd` as so:
 
 ```rust
-let seed = get_seed_from_somewhere(); // some source of entropy
+use tinyrand::{Rand, StdRand, Seeded};
+let seed = tinyrand_examples::get_seed_from_somewhere(); // some source of entropy
+
 let mut rand = StdRand::seed(seed);
 let num = rand.next_u64();
 println!("generated {num}");
@@ -115,13 +130,16 @@ You might also consider using [`getrandom`](https://lib.rs/crates/getrandom), wh
 
 If one doesn't care about `no_std`, they shouldn't be bound by its limitations. To seed from the system clock, you can opt in to `std`:
 
-```
+```sh
 cargo add tinyrand-std
 ```
 
 Now, we have a `ClockSeed` at our disposal, which also implements the `Rand` trait. `ClockSeed` derives a `u64` by XORing the upper 64 bits of the nanosecond timestamp (from `SystemTime`) with the lower 64 bits. It's not suitable for cryptographic use but will suffice for most general-purpose applications.
 
 ```rust
+use tinyrand::{Rand, StdRand, Seeded};
+use tinyrand_std::clock_seed::ClockSeed;
+
 let seed = ClockSeed::default().next_u64();
 println!("seeding with {seed}");
 let mut rand = StdRand::seed(seed);
@@ -134,7 +152,7 @@ Good testing coverage can sometimes be hard to achieve; doubly so when applicati
 
 The mock uses the `alloc` crate, as it requires heap allocation of closures. As such, the mock is distributed as an opt-in package:
 
-```
+```sh
 cargo add tinyrand-alloc
 ```
 
@@ -149,6 +167,9 @@ The delegates are specified by the test case, while the mock instance is passed 
 Starting with the absolute basics, let's mock `next_uXX()` to return a constant. We'll then check how many times our mock got called.
 
 ```rust
+use tinyrand::Rand;
+use tinyrand_alloc::Mock;
+
 let mut rand = Mock::default().with_next_u128(|_| 42);
 for _ in 0..10 {
     assert_eq!(42, rand.next_usize()); // always 42
@@ -159,6 +180,9 @@ assert_eq!(10, rand.state().next_u128_invocations());
 Although embarrassingly simple, this scenario is actually quite common. The same can be achieved with the `fixed(uXX)` function.
 
 ```rust
+use tinyrand::Rand;
+use tinyrand_alloc::{Mock, fixed};
+
 let mut rand = Mock::default().with_next_u128(fixed(42));
 assert_eq!(42, rand.next_usize()); // always 42
 ```
@@ -166,6 +190,10 @@ assert_eq!(42, rand.next_usize()); // always 42
 Since delegates are regular closures, we can bind to variables in the enclosing scope. This gives us almost unlimited control over our mock's behaviour.
 
 ```rust
+use tinyrand::Rand;
+use tinyrand_alloc::Mock;
+use core::cell::RefCell;
+
 let val = RefCell::new(3);
 let mut rand = Mock::default().with_next_u128(|_| *val.borrow());
 
@@ -179,6 +207,9 @@ assert_eq!(17, rand.next_usize());
 The delegate can be reassigned at any point, even after the mock has been created and exercised:
 
 ```rust
+use tinyrand::Rand;
+use tinyrand_alloc::{Mock, fixed};
+
 let mut rand = Mock::default().with_next_u128(fixed(42));
 assert_eq!(42, rand.next_usize());
 
@@ -189,6 +220,9 @@ assert_eq!(88, rand.next_usize());
 The signature of the `next_u128` delegate takes a `State` reference, which captures the number of times the mock was invoked. (The count is incremented only after the invocation is complete.) Let's write a mock that returns a "random" number derived from the invocation state.
 
 ```rust
+use tinyrand::Rand;
+use tinyrand_alloc::Mock;
+
 let mut rand = Mock::default().with_next_u128(|state| {
     // return number of completed invocations
     state.next_u128_invocations() as u128
@@ -201,6 +235,9 @@ assert_eq!(2, rand.next_usize());
 This is useful when we expect the mock to be called several times and each invocation should return a different result. A similar outcome can be achieved with the `counter(Range)` function, which cycles through a specified range of numbers, conveniently wrapping at the boundary:
 
 ```rust
+use tinyrand::Rand;
+use tinyrand_alloc::{Mock, counter};
+
 let mut rand = Mock::default().with_next_u128(counter(5..8));
 assert_eq!(5, rand.next_usize());
 assert_eq!(6, rand.next_usize());
@@ -215,6 +252,9 @@ Derived `Rand` methods, such as `next_bool(Probability)`, `next_lim(uXX)` and `n
 Luckily, `Rand` lets us "bypass" these mapping functions. This is where the other two delegates come in. In the following example, we mock the outcome of `next_bool`.
 
 ```rust
+use tinyrand::{Rand, Probability};
+use tinyrand_alloc::Mock;
+
 let mut rand = Mock::default().with_next_bool(|_, _| false);
 if rand.next_bool(Probability::new(0.999999)) {
     println!("very likely");
@@ -227,6 +267,9 @@ if rand.next_bool(Probability::new(0.999999)) {
 The `next_bool` delegate is handed a `Surrogate` struct, which is both a `Rand` implementation and keeper of the invocation state. The surrogate lets us derive `bool`s, as so:
 
 ```rust
+use tinyrand::{Rand, Probability};
+use tinyrand_alloc::Mock;
+
 let mut rand = Mock::default().with_next_bool(|surrogate, _| {
     surrogate.state().next_bool_invocations() % 2 == 0
 });
@@ -241,6 +284,9 @@ The surrogate also lets the delegate call the mocked methods from inside the moc
 The last delegate is used to mock both `next_lim` and `next_range` methods, owing to their isomorphism. Under the hood, `next_range` delegates to `next_lim`, such that, for any pair of limit boundaries (`M`, `N`), `M` < `N`, `next_range(M..N)` = `M` + `next_lim(N - M)`. This is how it's all mocked in practice:
 
 ```rust
+use tinyrand::{Rand, RandRange};
+use tinyrand_alloc::Mock;
+
 enum Day {
     Mon, Tue, Wed, Thu, Fri, Sat, Sun
 }

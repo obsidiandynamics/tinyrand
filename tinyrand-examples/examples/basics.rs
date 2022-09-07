@@ -1,9 +1,9 @@
 //! The bare essentials of using [`Rand`] and related traits.
 
-use std::cell::RefCell;
 use std::thread;
 use std::time::Duration;
 use tinyrand::{Probability, Rand, RandRange, StdRand};
+use tinyrand_examples::SomeSpecialCondition;
 
 #[test]
 fn run_main() {
@@ -62,22 +62,6 @@ fn next_bool() {
             println!("heads");
         } else {
             println!("tails");
-        }
-    }
-}
-
-#[derive(Default)]
-struct SomeSpecialCondition {
-    count: RefCell<u32>
-}
-
-impl SomeSpecialCondition {
-    fn has_happened(&self) -> bool {
-        if *self.count.borrow() == 10 {
-            true
-        } else {
-            *self.count.borrow_mut() += 1;
-            false
         }
     }
 }
