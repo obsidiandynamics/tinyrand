@@ -1,3 +1,5 @@
+//! How to seed a [`Rand`].
+
 use tinyrand::{Rand, Seeded, StdRand};
 use tinyrand_std::ClockSeed;
 

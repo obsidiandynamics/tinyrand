@@ -7,13 +7,13 @@ use core::ops::Range;
 use tinyrand::{Probability, Rand};
 
 /// Mock delegate for [`Rand::next_u128`].
-pub type NextU128 = Box<dyn FnMut(&State) -> u128>;
+type NextU128 = Box<dyn FnMut(&State) -> u128>;
 
 /// Mock delegate for [`Rand::next_bool`].
-pub type NextBool = Box<dyn FnMut(Surrogate, Probability) -> bool>;
+type NextBool = Box<dyn FnMut(Surrogate, Probability) -> bool>;
 
 /// Mock delegate for [`Rand::next_lim_u128`].
-pub type NextLim = Box<dyn FnMut(Surrogate, u128) -> u128>;
+type NextLim = Box<dyn FnMut(Surrogate, u128) -> u128>;
 
 /// Mock invocation state.
 #[derive(Default)]
@@ -40,7 +40,7 @@ impl State {
     }
 }
 
-/// Encapsulates the state of the mock and a reference to the [`NextU128`] delegate, so
+/// Encapsulates the state of the mock and a reference to the `next_u128` delegate, so
 /// that it can be invoked from inside the mock by, for example, another delegate.
 pub struct Surrogate<'a> {
     state: &'a mut State,

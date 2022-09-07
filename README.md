@@ -1,5 +1,5 @@
 # `tinyrand`
-Lightweight RNG specification and several ultrafast implementations for Rust. `tinyrand` is `no_std`.
+Lightweight RNG specification and several ultrafast implementations for Rust. `tinyrand` is `no_std` and doesn't use a heap allocator.
 
 [![Crates.io](https://img.shields.io/crates/v/tinyrand?style=flat-square&logo=rust)](https://crates.io/crates/tinyrand)
 [![docs.rs](https://img.shields.io/badge/docs.rs-tinyrand-blue?style=flat-square&logo=docs.rs)](https://docs.rs/tinyrand)
@@ -127,6 +127,133 @@ println!("seeding with {seed}");
 let mut rand = StdRand::seed(seed);
 let num = rand.next_u64();
 println!("generated {num}");
+```
+
+# Mocking
+Good testing coverage can sometimes be hard to achieve; doubly so with applications that depend on randomness or other sources of nondeterminism. `tinyrand` comes with a mock RNG that offers fine-grained control over the execution of your code.
+
+The mock uses the `alloc` crate, as it requires heap allocation of closures. As such, the mock is distributed as an opt-in package:
+
+```
+cargo add tinyrand-alloc
+```
+
+At the grassroots level, `Mock` is struct configured with a handful of **delegates**. A delegate is a closure that is invoked by the mock when a particular trait method is called on it. The mock also maintains an internal invocation state that keeps track of the number of times a particular delegate was exercised. So you can not only mock the behaviour of the `Rand` trait, but also verify the number of types a particular group of trait methods were called.
+
+The delegates are specified by the test case, while the mock is passed to the system under test as a `Rand` implementation. Currently, three delegate types are supported:
+
+1. `FnMut(&State) -> u128` — invoked when one of the `next_uXX()` methods is called on the mock. (`uXX` being one of `u16`, `u32`, `u64`, `u128` or `usize`.) The delegate returns the "next random number", which may be up to 128 bits wide. The width is designed to accommodate `u128` — the widest type supported by `Rand`; if one of the narrower types is requested, the mock simply returns just the lower bits. (E.g., for a `u32`, the mocked value is truncated using `as u32` under the hood.)
+2. `FnMut(Surrogate, Probability) -> bool` — invoked when the `next_bool(Probability)` method is called.
+3. `FnMut(Surrogate, u128) -> u128` — when either `next_lim` or `next_range` is called.
+
+Starting with the absolute basics, let's mock `next_uXX()` to return a constant. We then check how many times our mock got called.
+
+```rust
+let mut rand = Mock::default().with_next_u128(|_| 42);
+for _ in 0..10 {
+    assert_eq!(42, rand.next_usize()); // always 42
+}
+assert_eq!(10, rand.state().next_u128_invocations());
+```
+
+Although laughably simple, this scenario is actually quite common. The same can be achieved with the `fixed(uXX)` function.
+
+```rust
+let mut rand = Mock::default().with_next_u128(fixed(42));
+assert_eq!(42, rand.next_usize()); // always 42
+```
+
+Since delegates are proper closures, we can bind to variables in the enclosing scope:
+
+```rust
+let val = Rc::new(RefCell::new(3u128));
+let mut rand = {
+    let val = val.clone();
+    Mock::default().with_next_u128(move |_| {
+        *(*val).borrow()
+    })
+};
+
+assert_eq!(3, rand.next_usize());
+
+// ... later ...
+*(*val).borrow_mut() = 100;
+assert_eq!(100, rand.next_usize());
+```
+
+The delegate can be reassigned at any point, even after the mock has been created and exercised:
+
+```rust
+let mut rand = Mock::default().with_next_u128(fixed(42));
+assert_eq!(42, rand.next_usize());
+
+rand = rand.with_next_u128(fixed(88));
+assert_eq!(88, rand.next_usize());
+```
+
+The signature of the delegate takes a `State` reference, which captures the number of times the mock was invoked. (The count is incremented only after the invocation is complete.) Let's write a mock that returns a "random" number derived from the invocation state.
+
+```rust
+let mut rand = Mock::default().with_next_u128(|state| {
+    state.next_u128_invocations() as u128
+});
+assert_eq!(0, rand.next_usize());
+assert_eq!(1, rand.next_usize());
+assert_eq!(2, rand.next_usize());
+```
+
+This is useful when we expect the mock to be called several times and each invocation should return a different result. A similar outcome can be achieved with the `counter(Range)` function, which cycles through a specified range of numbers, conveniently wrapping at the boundary:
+
+```rust
+let mut rand = Mock::default().with_next_u128(counter(5..8));
+assert_eq!(5, rand.next_usize());
+assert_eq!(6, rand.next_usize());
+assert_eq!(7, rand.next_usize());
+assert_eq!(5, rand.next_usize());
+```
+
+By supplying just the `next_u128` delegate, we can influence the result of every other method in the `Rand` trait, because they all derive from the same source of randomness and will eventually call our delegate under the hood... in theory! In practice, things are a lot more complicated.
+
+Derived `Rand` methods, such as `next_bool(Probability)`, `next_lim(uXX)` and `next_range(Range)` are backed by different probability distributions. `next_bool`, for example, draws from the Bernoulli distribution, whereas `next_lim` and `next_range` use a scaled uniform distribution with an added bias removal layer. Furthermore, the mapping between the various distributions is an internal implementation detail that is subject to change.
+
+This is where the other two delegates come in. In the following example, we mock the outcome of `next_bool`.
+
+```rust
+let mut rand = Mock::default().with_next_bool(|_, _| false);
+if rand.next_bool(Probability::new(0.999999)) {
+    println!("very likely");
+} else {
+    // we can cover this branch thanks to the magic of mocking
+    println!("very unlikely");
+}
+```
+
+The `next_bool` delegate is handed a `Surrogate` struct, which is both a `Rand` implementation and the keeper of the invocation state. The surrogate lets us derive `bool`s, as so:
+
+```rust
+let mut rand = Mock::default().with_next_bool(|surrogate, _| {
+    surrogate.state().next_bool_invocations() % 2 == 0
+});
+assert_eq!(true, rand.next_bool(Probability::new(0.5)));
+assert_eq!(false, rand.next_bool(Probability::new(0.5)));
+assert_eq!(true, rand.next_bool(Probability::new(0.5)));
+assert_eq!(false, rand.next_bool(Probability::new(0.5)));
+```
+
+The surrogate also lets the delegate call the mocked methods from inside the mock.
+
+The last delegate is used to mock both `next_lim` and `next_range` methods, owing to their isomorphism. Under the hood, `next_range` delegates to `next_lim`, such that, for any pair of limit boundaries (`M`, `N`), `M` < `N`, `next_range(M..N)` = `M` + `next_lim(N - M)`. This is how it's mocked in practice:
+
+```rust
+enum Day {
+    Mon, Tue, Wed, Thu, Fri, Sat, Sun
+}
+const DAYS: [Day; 7] = [Day::Mon, Day::Tue, Day::Wed, Day::Thu, Day::Fri, Day::Sat, Day::Sun];
+
+let mut rand = Mock::default().with_next_lim_u128(|_, _| 6);
+let day = &DAYS[rand.next_range(0..DAYS.len())];
+assert!(matches!(day, Day::Sun)); // always a Sunday
+assert!(matches!(day, Day::Sun));
 ```
 
 # Credits

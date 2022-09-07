@@ -1,3 +1,5 @@
+//! The bare essentials of using [`Rand`] and related traits.
+
 use std::cell::RefCell;
 use std::thread;
 use std::time::Duration;
