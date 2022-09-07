@@ -2,7 +2,8 @@
 
 use core::cell::{RefCell};
 use core::ops::{Range};
-use crate::Rand;
+use crate::{Rand, rand64};
+use crate::rand64::Rand64;
 
 /// Mock invocation state.
 #[derive(Default)]
@@ -39,6 +40,14 @@ impl<D: FnMut(&State) -> u64> TestMock<D> {
 }
 
 impl<D: FnMut(&State) -> u64> Rand for TestMock<D> {
+    fn next_u16(&mut self) -> u16 {
+        rand64::next_u16(self)
+    }
+
+    fn next_u32(&mut self) -> u32 {
+        rand64::next_u32(self)
+    }
+
     /// Delegates to the underlying closure and increments the `state.invocations` counter
     /// _after_ the closure returns.
     fn next_u64(&mut self) -> u64 {
@@ -47,7 +56,13 @@ impl<D: FnMut(&State) -> u64> Rand for TestMock<D> {
         self.state.next_u64_invocations += 1;
         r
     }
+
+    fn next_u128(&mut self) -> u128 {
+        rand64::next_u128(self)
+    }
 }
+
+impl<D: FnMut(&State) -> u64> Rand64 for TestMock<D> {}
 
 /// A pre-canned delegate that counts in the given range, wrapping around when it reaches
 /// the end.

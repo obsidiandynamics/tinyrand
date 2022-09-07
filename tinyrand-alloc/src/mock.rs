@@ -3,7 +3,8 @@
 use alloc::boxed::Box;
 use core::cell::RefCell;
 use core::ops::Range;
-use tinyrand::{Probability, Rand};
+use tinyrand::{Probability, Rand, rand128};
+use tinyrand::rand128::Rand128;
 
 /// Mock invocation state.
 #[derive(Default)]
@@ -44,9 +45,17 @@ impl Surrogate<'_, '_> {
     }
 }
 
-impl<'a, 'd> Rand for Surrogate<'a, 'd> {
+impl Rand for Surrogate<'_, '_> {
+    fn next_u16(&mut self) -> u16 {
+        rand128::next_u16(self)
+    }
+
+    fn next_u32(&mut self) -> u32 {
+        rand128::next_u32(self)
+    }
+
     fn next_u64(&mut self) -> u64 {
-        self.next_u128() as u64
+        rand128::next_u64(self)
     }
 
     fn next_u128(&mut self) -> u128 {
@@ -55,6 +64,8 @@ impl<'a, 'd> Rand for Surrogate<'a, 'd> {
         r
     }
 }
+
+impl Rand128 for Surrogate<'_, '_> {}
 
 /// Mock RNG, containing invocation state and delegate closures.
 pub struct Mock<'d> {
@@ -147,8 +158,16 @@ impl<'d> Mock<'d> {
 }
 
 impl Rand for Mock<'_> {
+    fn next_u16(&mut self) -> u16 {
+        rand128::next_u16(self)
+    }
+
+    fn next_u32(&mut self) -> u32 {
+        rand128::next_u32(self)
+    }
+
     fn next_u64(&mut self) -> u64 {
-        self.next_u128() as u64
+        rand128::next_u64(self)
     }
 
     /// Delegates to the underlying closure and increments the `state.next_u128_invocations` counter
@@ -198,6 +217,8 @@ impl Rand for Mock<'_> {
         r
     }
 }
+
+impl Rand128 for Mock<'_> {}
 
 /// A pre-canned delegate that counts in the given range, wrapping around when it reaches
 /// the end.

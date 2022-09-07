@@ -6,6 +6,8 @@
 pub mod counter;
 pub mod duration;
 pub mod mock_support;
+pub mod rand64;
+pub mod rand128;
 pub mod xorshift;
 pub mod wyrand;
 
@@ -20,32 +22,18 @@ use core::ops::Range;
 pub type StdRand = Wyrand;
 
 /// A minimal specification of a random number generator.
-///
-/// Implementers must, at minimum, provide a working [`Rand::next_u64`]. The rest of the methods will
-/// be derived. The default implementations either truncate the generated number (`u16`, `u32`)
-/// or generate several numbers and splice the outputs (`u128`). Implementers may provide more
-/// efficient versions for `u16`, `u32` and `u128` generators, overriding the defaults.
 pub trait Rand {
     /// Returns the next random `u16`.
-    #[inline(always)]
-    fn next_u16(&mut self) -> u16 {
-        self.next_u64() as u16
-    }
+    fn next_u16(&mut self) -> u16;
 
     /// Returns the next random `u32`.
-    #[inline(always)]
-    fn next_u32(&mut self) -> u32 {
-        self.next_u64() as u32
-    }
+    fn next_u32(&mut self) -> u32;
 
     /// Returns the next random `u64`.
     fn next_u64(&mut self) -> u64;
 
     /// Returns the next random `u128`.
-    #[inline(always)]
-    fn next_u128(&mut self) -> u128 {
-        u128::from(self.next_u64()) << 64 | u128::from(self.next_u64())
-    }
+    fn next_u128(&mut self) -> u128;
 
     #[cfg(target_pointer_width = "16")]
     #[inline(always)]
