@@ -1,19 +1,9 @@
 //! Mock RNG for testing.
 
 use alloc::boxed::Box;
-use alloc::rc::Rc;
 use core::cell::RefCell;
 use core::ops::Range;
 use tinyrand::{Probability, Rand};
-
-/// Mock delegate for [`Rand::next_u128`].
-type NextU128 = Box<dyn FnMut(&State) -> u128>;
-
-/// Mock delegate for [`Rand::next_bool`].
-type NextBool = Box<dyn FnMut(Surrogate, Probability) -> bool>;
-
-/// Mock delegate for [`Rand::next_lim_u128`].
-type NextLim = Box<dyn FnMut(Surrogate, u128) -> u128>;
 
 /// Mock invocation state.
 #[derive(Default)]
@@ -42,19 +32,19 @@ impl State {
 
 /// Encapsulates the state of the mock and a reference to the `next_u128` delegate, so
 /// that it can be invoked from inside the mock by, for example, another delegate.
-pub struct Surrogate<'a> {
+pub struct Surrogate<'a, 'd> {
     state: &'a mut State,
-    next_u128_delegate: &'a mut NextU128,
+    next_u128_delegate: &'a mut Box<dyn FnMut(&State) -> u128 + 'd>,
 }
 
-impl<'a> Surrogate<'a> {
+impl Surrogate<'_, '_> {
     /// Obtains the mock state.
     pub fn state(&self) -> &State {
         self.state
     }
 }
 
-impl<'a> Rand for Surrogate<'a> {
+impl<'a, 'd> Rand for Surrogate<'a, 'd> {
     fn next_u64(&mut self) -> u64 {
         self.next_u128() as u64
     }
@@ -66,15 +56,15 @@ impl<'a> Rand for Surrogate<'a> {
     }
 }
 
-// Mock RNG, containing invocation state and delegate closures.
-pub struct Mock {
+/// Mock RNG, containing invocation state and delegate closures.
+pub struct Mock<'d> {
     state: State,
-    next_u128_delegate: NextU128,
-    next_bool_delegate: NextBool,
-    next_lim_u128_delegate: NextLim,
+    next_u128_delegate: Box<dyn FnMut(&State) -> u128 + 'd>,
+    next_bool_delegate: Box<dyn FnMut(Surrogate, Probability) -> bool + 'd>,
+    next_lim_u128_delegate: Box<dyn FnMut(Surrogate, u128) -> u128 + 'd>,
 }
 
-impl Default for Mock {
+impl<'a> Default for Mock<'a> {
     fn default() -> Self {
         Self {
             state: State::default(),
@@ -87,7 +77,7 @@ impl Default for Mock {
     }
 }
 
-impl Mock {
+impl<'d> Mock<'d> {
     /// Assigns a [`Rand::next_u128`] delegate to the mock. I.e., when the [`Rand::next_u128`]
     /// method is invoked on the mock (directly, or via another method), it will delegate to
     /// the given closure.
@@ -103,7 +93,7 @@ impl Mock {
     /// assert_eq!(42, mock.next_u128());
     /// ```
     #[must_use]
-    pub fn with_next_u128(mut self, delegate: impl FnMut(&State) -> u128 + 'static) -> Self {
+    pub fn with_next_u128(mut self, delegate: impl FnMut(&State) -> u128 + 'd) -> Self {
         self.next_u128_delegate = Box::new(delegate);
         self
     }
@@ -122,7 +112,7 @@ impl Mock {
     #[must_use]
     pub fn with_next_bool(
         mut self,
-        delegate: impl FnMut(Surrogate, Probability) -> bool + 'static,
+        delegate: impl FnMut(Surrogate, Probability) -> bool + 'd,
     ) -> Self {
         self.next_bool_delegate = Box::new(delegate);
         self
@@ -144,7 +134,7 @@ impl Mock {
     #[must_use]
     pub fn with_next_lim_u128(
         mut self,
-        delegate: impl FnMut(Surrogate, u128) -> u128 + 'static,
+        delegate: impl FnMut(Surrogate, u128) -> u128 + 'd,
     ) -> Self {
         self.next_lim_u128_delegate = Box::new(delegate);
         self
@@ -156,7 +146,7 @@ impl Mock {
     }
 }
 
-impl Rand for Mock {
+impl Rand for Mock<'_> {
     fn next_u64(&mut self) -> u64 {
         self.next_u128() as u64
     }
@@ -248,22 +238,21 @@ pub fn fixed(val: u128) -> impl FnMut(&State) -> u128 {
     move |_| val
 }
 
-/// A pre-canned delegate that parrots the value on the heap.
+/// A pre-canned delegate that parrots the value in the given cell.
 ///
 /// # Examples
 /// ```
 /// use std::cell::RefCell;
-/// use std::rc::Rc;
 /// use tinyrand::{Rand, RefCellExt};
 /// use tinyrand_alloc::{Mock, echo};
 ///
-/// let cell = Rc::new(RefCell::default());
-/// let mut mock = Mock::default().with_next_u128(echo(cell.clone()));
+/// let cell = RefCell::default();
+/// let mut mock = Mock::default().with_next_u128(echo(&cell));
 /// assert_eq!(0, mock.next_u64());
 /// cell.set(42);
 /// assert_eq!(42, mock.next_u64());
 /// ```
-pub fn echo(cell: Rc<RefCell<u128>>) -> impl FnMut(&State) -> u128 {
+pub fn echo(cell: &RefCell<u128>) -> impl FnMut(&State) -> u128 + '_ {
     move |_| *cell.borrow()
 }
 

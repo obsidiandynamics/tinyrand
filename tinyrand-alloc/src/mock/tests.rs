@@ -42,8 +42,8 @@ fn next_bool() {
 
 #[test]
 fn next_bool_delegates_by_default() {
-    let cell = Rc::new(RefCell::default());
-    let mut mock = Mock::default().with_next_u128(echo(cell.clone()));
+    let cell = RefCell::default();
+    let mut mock = Mock::default().with_next_u128(echo(&cell));
     assert_eq!(0, mock.state().next_bool_invocations());
     assert_eq!(0, mock.state().next_u128_invocations());
     assert!(!mock.next_bool(Probability::new(0.0)));
@@ -84,7 +84,7 @@ fn next_lim() {
 #[test]
 fn next_lim_delegates_by_default() {
     let cell = Rc::new(RefCell::default());
-    let mut mock = Mock::default().with_next_u128(echo(cell.clone()));
+    let mut mock = Mock::default().with_next_u128(echo(&cell));
     assert_eq!(0, mock.state().next_lim_u128_invocations());
     assert_eq!(0, mock.next_lim_u16(1));
     assert_eq!(1, mock.state().next_lim_u128_invocations());

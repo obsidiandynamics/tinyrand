@@ -3,6 +3,11 @@
 use tinyrand::{Rand, Seeded, StdRand};
 use tinyrand_std::ClockSeed;
 
+#[test]
+fn run_main() {
+    main();
+}
+
 fn main() {
     seed_from_u64();
     seed_from_clock();

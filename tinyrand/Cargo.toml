@@ -5,7 +5,7 @@ edition = "2021"
 readme = "../README.md"
 authors = ["Emil Koutanov"]
 license = "MIT"
-description = "Lightweight RNG specification and several ultrafast implementations for Rust."
+description = "Lightweight RNG specification and several ultrafast implementations in Rust."
 repository = "https://github.com/obsidiandynamics/tinyrand"
 keywords = ["rand", "rng", "no_std"]
 

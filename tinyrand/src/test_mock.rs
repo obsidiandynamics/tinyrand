@@ -17,7 +17,7 @@ impl State {
     }
 }
 
-// Mock RNG, initialised with a delegate closure.
+/// Mock RNG, initialised with a delegate closure.
 pub struct TestMock<D: FnMut(&State) -> u64> {
     state: State,
     delegate: D,

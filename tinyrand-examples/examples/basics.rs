@@ -5,6 +5,11 @@ use std::thread;
 use std::time::Duration;
 use tinyrand::{Probability, Rand, RandRange, StdRand};
 
+#[test]
+fn run_main() {
+    main();
+}
+
 fn main() {
     next_u64();
     next_u128();

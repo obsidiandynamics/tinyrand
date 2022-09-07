@@ -1,5 +1,5 @@
 # `tinyrand`
-Lightweight RNG specification and several ultrafast implementations for Rust. `tinyrand` is `no_std` and doesn't use a heap allocator.
+Lightweight RNG specification and several ultrafast implementations in Rust. `tinyrand` is `no_std` and doesn't use a heap allocator.
 
 [![Crates.io](https://img.shields.io/crates/v/tinyrand?style=flat-square&logo=rust)](https://crates.io/crates/tinyrand)
 [![docs.rs](https://img.shields.io/badge/docs.rs-tinyrand-blue?style=flat-square&logo=docs.rs)](https://docs.rs/tinyrand)
@@ -11,7 +11,7 @@ Lightweight RNG specification and several ultrafast implementations for Rust. `t
 * It's very small and doesn't need `std`, meaning it's embeddable — it runs on microcontrollers and bare-metal (no OS) environments.
 * It's very fast. It comes bundled with [Xorshift](https://en.wikipedia.org/wiki/Xorshift) and [Wyrand](https://github.com/wangyi-fudan/wyhash/blob/master/Modern%20Non-Cryptographic%20Hash%20Function%20and%20Pseudorandom%20Number%20Generator.pdf).
 * The RNG behaviour is concisely specified as a handful of traits, independent of the underlying implementations. It makes it easy to swap implementations.
-* It comes with [`Mock`](https://docs.rs/tinyrand-alloc/latest/tinyrand/mock/index.html) for testing code that depends on random numbers. That's if you care about code coverage.
+* It comes with [`Mock`](https://docs.rs/tinyrand-alloc/latest/tinyrand-alloc/mock/index.html) for testing code that depends on random numbers. That is, if you care about code coverage.
 
 # Performance
 Below is a comparison of several notable RNGs.
@@ -26,9 +26,9 @@ Below is a comparison of several notable RNGs.
 TL;DR: `tinyrand` is almost 3x faster than `fastrand` and more than 6x faster than `rand`.
 
 # Statistical properties
-It's impossible to tell for certain whether a PRNG is good; the answer is probabilistic. `tinyrand` (both Wyrand and Xorshift) algorithms stand up well against the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) barrage of tests. (Tested on 30.8 billion samples.) This means `tinyrand` produces numbers that appear sufficiently random and is likely fit for use in most applications.
+It's impossible to tell for certain whether a certain PRNG is good; the answer is probabilistic. Both the Wyrand and Xorshift algorithms stand up well against the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) barrage of tests. (Tested on 30.8 billion samples.) This means `tinyrand` produces numbers that appear sufficiently random and is likely fit for use in most applications.
 
-`tinyrand` algorithms are not cryptographically secure, meaning it is possible to guess the next random number by observing a sequence of numbers. If you need a CSPRNG, it is strongly suggested that you go with `rand`. CSPRNGs are generally a lot slower and most folks don't need one.
+`tinyrand` algorithms are not cryptographically secure, meaning it is possible to guess the next random number by observing a sequence of numbers. (Or the preceding numbers, for that matter.) If you need a robust CSPRNG, it is strongly suggested that you go with `rand`. CSPRNGs are generally a lot slower and most folks don't need one.
 
 # Getting started
 ## Add dependency
@@ -80,7 +80,7 @@ for _ in 0..10 {
 }
 ```
 
-There are times when we need our thread to sleep for a while, waiting for a condition. When many threads are sleeping, it is generally recommended they back off randomly to avoiding a stampede.
+There are times when we need our thread to sleep for a while, waiting for a condition. When many threads are sleeping, it is generally recommended they back off randomly to avoid a stampede.
 
 ```rust
 let mut rand = StdRand::default();
@@ -98,20 +98,20 @@ while !condition.has_happened() {
 ```
 
 ## Seeding
-Invoking `Default::default()` on a `Rand` initialises it with a constant seed. This is great for repeatability, but always results in the same run of "random" numbers, which is not what most folks need.
+Invoking `Default::default()` on a `Rand` initialises it with a constant seed. This is great for repeatability but results in the same run of "random" numbers, which is not what most folks need.
 
-`tinyrand` is a `no_std` crate and, sadly, there is no good, portable way to generate entropy when one cannot make assumptions about the underlying platform. In most applications, one would use a clock, but something as trivial as `SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)` mightn't be always available.
+`tinyrand` is a `no_std` crate and, sadly, there is no good, portable way to generate entropy when one cannot make assumptions about the underlying platform. In most applications, one might a clock, but something as trivial as `SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)` mightn't be always available.
 
 If you have an entropy source at your disposal, you could seed an `Rrnd` as so:
 
 ```rust
-let seed = get_seed_from_somewhere();
+let seed = get_seed_from_somewhere(); // some source of entropy
 let mut rand = StdRand::seed(seed);
 let num = rand.next_u64();
 println!("generated {num}");
 ```
 
-You might consider using [`getrandom`](https://lib.rs/crates/getrandom), which is a cross-platform method for retrieving entropy data.
+You might also consider using [`getrandom`](https://lib.rs/crates/getrandom), which is a cross-platform method for retrieving entropy data.
 
 If one doesn't care about `no_std`, they shouldn't be bound by its limitations. To seed from the system clock, you can opt in to `std`:
 
@@ -119,7 +119,7 @@ If one doesn't care about `no_std`, they shouldn't be bound by its limitations. 
 cargo add tinyrand-std
 ```
 
-Now, we have a `ClockSeed` at our disposal, which also implements the `Rand` trait. `ClockSeed` derives a `u64` by XORing the upper 64 bits of the nanosecond timestamp (from `SystemTime`) with the lower 64 bits. It's not suitable for cryptographic use, but it will suit most general-purpose applications.
+Now, we have a `ClockSeed` at our disposal, which also implements the `Rand` trait. `ClockSeed` derives a `u64` by XORing the upper 64 bits of the nanosecond timestamp (from `SystemTime`) with the lower 64 bits. It's not suitable for cryptographic use but will suffice for most general-purpose applications.
 
 ```rust
 let seed = ClockSeed::default().next_u64();
@@ -130,7 +130,7 @@ println!("generated {num}");
 ```
 
 # Mocking
-Good testing coverage can sometimes be hard to achieve; doubly so with applications that depend on randomness or other sources of nondeterminism. `tinyrand` comes with a mock RNG that offers fine-grained control over the execution of your code.
+Good testing coverage can sometimes be hard to achieve; doubly so when applications depend on randomness or other sources of nondeterminism. `tinyrand` comes with a mock RNG that offers fine-grained control over the execution of your code.
 
 The mock uses the `alloc` crate, as it requires heap allocation of closures. As such, the mock is distributed as an opt-in package:
 
@@ -138,15 +138,15 @@ The mock uses the `alloc` crate, as it requires heap allocation of closures. As 
 cargo add tinyrand-alloc
 ```
 
-At the grassroots level, `Mock` is struct configured with a handful of **delegates**. A delegate is a closure that is invoked by the mock when a particular trait method is called on it. The mock also maintains an internal invocation state that keeps track of the number of times a particular delegate was exercised. So you can not only mock the behaviour of the `Rand` trait, but also verify the number of types a particular group of trait methods were called.
+At the grassroots level, `Mock` is struct configured with a handful of **delegates**. A delegate is a closure that is invoked by the mock when a particular trait method is called by the system under test. The mock also maintains an internal invocation state that keeps track of the number of times a particular delegate was exercised. So, not only can you mock the behaviour of the `Rand` trait, but also verify the number of types a particular group of related trait methods were called.
 
-The delegates are specified by the test case, while the mock is passed to the system under test as a `Rand` implementation. Currently, three delegate types are supported:
+The delegates are specified by the test case, while the mock instance is passed to the system under test as a `Rand` implementation. Currently, three delegate types are supported:
 
-1. `FnMut(&State) -> u128` — invoked when one of the `next_uXX()` methods is called on the mock. (`uXX` being one of `u16`, `u32`, `u64`, `u128` or `usize`.) The delegate returns the "next random number", which may be up to 128 bits wide. The width is designed to accommodate `u128` — the widest type supported by `Rand`; if one of the narrower types is requested, the mock simply returns just the lower bits. (E.g., for a `u32`, the mocked value is truncated using `as u32` under the hood.)
+1. `FnMut(&State) -> u128` — invoked when one of the `next_uXX()` methods is called on the mock. (`uXX` being one of `u16`, `u32`, `u64`, `u128` or `usize`.) The delegate returns the next "random" number, which may be up to 128 bits wide. The width is designed to accommodate `u128` — the widest type supported by `Rand`. If one of the narrower types is requested, the mock simply returns the lower bits. (E.g., for a `u32`, the mocked value is truncated using `as u32` under the hood.)
 2. `FnMut(Surrogate, Probability) -> bool` — invoked when the `next_bool(Probability)` method is called.
 3. `FnMut(Surrogate, u128) -> u128` — when either `next_lim` or `next_range` is called.
 
-Starting with the absolute basics, let's mock `next_uXX()` to return a constant. We then check how many times our mock got called.
+Starting with the absolute basics, let's mock `next_uXX()` to return a constant. We'll then check how many times our mock got called.
 
 ```rust
 let mut rand = Mock::default().with_next_u128(|_| 42);
@@ -156,29 +156,24 @@ for _ in 0..10 {
 assert_eq!(10, rand.state().next_u128_invocations());
 ```
 
-Although laughably simple, this scenario is actually quite common. The same can be achieved with the `fixed(uXX)` function.
+Although embarrassingly simple, this scenario is actually quite common. The same can be achieved with the `fixed(uXX)` function.
 
 ```rust
 let mut rand = Mock::default().with_next_u128(fixed(42));
 assert_eq!(42, rand.next_usize()); // always 42
 ```
 
-Since delegates are proper closures, we can bind to variables in the enclosing scope:
+Since delegates are regular closures, we can bind to variables in the enclosing scope. This gives us almost unlimited control over our mock's behaviour.
 
 ```rust
-let val = Rc::new(RefCell::new(3u128));
-let mut rand = {
-    let val = val.clone();
-    Mock::default().with_next_u128(move |_| {
-        *(*val).borrow()
-    })
-};
+let val = RefCell::new(3);
+let mut rand = Mock::default().with_next_u128(|_| *val.borrow());
 
 assert_eq!(3, rand.next_usize());
 
 // ... later ...
-*(*val).borrow_mut() = 100;
-assert_eq!(100, rand.next_usize());
+*val.borrow_mut() = 17;
+assert_eq!(17, rand.next_usize());
 ```
 
 The delegate can be reassigned at any point, even after the mock has been created and exercised:
@@ -187,14 +182,15 @@ The delegate can be reassigned at any point, even after the mock has been create
 let mut rand = Mock::default().with_next_u128(fixed(42));
 assert_eq!(42, rand.next_usize());
 
-rand = rand.with_next_u128(fixed(88));
+rand = rand.with_next_u128(fixed(88)); // the mock's behaviour is now altered
 assert_eq!(88, rand.next_usize());
 ```
 
-The signature of the delegate takes a `State` reference, which captures the number of times the mock was invoked. (The count is incremented only after the invocation is complete.) Let's write a mock that returns a "random" number derived from the invocation state.
+The signature of the `next_u128` delegate takes a `State` reference, which captures the number of times the mock was invoked. (The count is incremented only after the invocation is complete.) Let's write a mock that returns a "random" number derived from the invocation state.
 
 ```rust
 let mut rand = Mock::default().with_next_u128(|state| {
+    // return number of completed invocations
     state.next_u128_invocations() as u128
 });
 assert_eq!(0, rand.next_usize());
@@ -209,14 +205,14 @@ let mut rand = Mock::default().with_next_u128(counter(5..8));
 assert_eq!(5, rand.next_usize());
 assert_eq!(6, rand.next_usize());
 assert_eq!(7, rand.next_usize());
-assert_eq!(5, rand.next_usize());
+assert_eq!(5, rand.next_usize()); // start again
 ```
 
-By supplying just the `next_u128` delegate, we can influence the result of every other method in the `Rand` trait, because they all derive from the same source of randomness and will eventually call our delegate under the hood... in theory! In practice, things are a lot more complicated.
+By supplying just the `next_u128` delegate, we can influence the result of every other method in the `Rand` trait, because they all derive from the _same_ source of randomness and will eventually call our delegate under the hood... in theory! In practice, things are a lot more complicated.
 
-Derived `Rand` methods, such as `next_bool(Probability)`, `next_lim(uXX)` and `next_range(Range)` are backed by different probability distributions. `next_bool`, for example, draws from the Bernoulli distribution, whereas `next_lim` and `next_range` use a scaled uniform distribution with an added bias removal layer. Furthermore, the mapping between the various distributions is an internal implementation detail that is subject to change.
+Derived `Rand` methods, such as `next_bool(Probability)`, `next_lim(uXX)` and `next_range(Range)` are backed by different probability distributions. `next_bool`, for example, draws from the Bernoulli distribution, whereas `next_lim` and `next_range` use a scaled uniform distribution with an added debiasing layer. Furthermore, the mapping between the various distributions is an internal implementation detail that is subject to change. The debiasing layer alone has several implementations, optimised for types of varying widths. In other words, the mappings from `next_u128` to `next_bool`, `next_lim` and `next_range` and nontrivial; it's not something you'll want to mock without a calculator and some knowledge of modular arithmetic.
 
-This is where the other two delegates come in. In the following example, we mock the outcome of `next_bool`.
+Luckily, `Rand` lets us "bypass" these mapping functions. This is where the other two delegates come in. In the following example, we mock the outcome of `next_bool`.
 
 ```rust
 let mut rand = Mock::default().with_next_bool(|_, _| false);
@@ -228,7 +224,7 @@ if rand.next_bool(Probability::new(0.999999)) {
 }
 ```
 
-The `next_bool` delegate is handed a `Surrogate` struct, which is both a `Rand` implementation and the keeper of the invocation state. The surrogate lets us derive `bool`s, as so:
+The `next_bool` delegate is handed a `Surrogate` struct, which is both a `Rand` implementation and keeper of the invocation state. The surrogate lets us derive `bool`s, as so:
 
 ```rust
 let mut rand = Mock::default().with_next_bool(|surrogate, _| {
@@ -242,7 +238,7 @@ assert_eq!(false, rand.next_bool(Probability::new(0.5)));
 
 The surrogate also lets the delegate call the mocked methods from inside the mock.
 
-The last delegate is used to mock both `next_lim` and `next_range` methods, owing to their isomorphism. Under the hood, `next_range` delegates to `next_lim`, such that, for any pair of limit boundaries (`M`, `N`), `M` < `N`, `next_range(M..N)` = `M` + `next_lim(N - M)`. This is how it's mocked in practice:
+The last delegate is used to mock both `next_lim` and `next_range` methods, owing to their isomorphism. Under the hood, `next_range` delegates to `next_lim`, such that, for any pair of limit boundaries (`M`, `N`), `M` < `N`, `next_range(M..N)` = `M` + `next_lim(N - M)`. This is how it's all mocked in practice:
 
 ```rust
 enum Day {
@@ -253,11 +249,11 @@ const DAYS: [Day; 7] = [Day::Mon, Day::Tue, Day::Wed, Day::Thu, Day::Fri, Day::S
 let mut rand = Mock::default().with_next_lim_u128(|_, _| 6);
 let day = &DAYS[rand.next_range(0..DAYS.len())];
 assert!(matches!(day, Day::Sun)); // always a Sunday
-assert!(matches!(day, Day::Sun));
+assert!(matches!(day, Day::Sun)); // yes!!!
 ```
 
 # Credits
 * G. Marsaglia for [Xorshift](https://en.wikipedia.org/wiki/Xorshift).
 * Y. Wang, D. B. Romero, D. Lemire and L. Jin for [Wyrand](https://github.com/wangyi-fudan/wyhash/blob/master/Modern%20Non-Cryptographic%20Hash%20Function%20and%20Pseudorandom%20Number%20Generator.pdf).
 * R. G. Brown for the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) test suite.
-* D. Lemire for the work on [Fast Random Integer Generation in an Interval](https://arxiv.org/abs/1805.10941).
+* D. Lemire for his work on [Fast Random Integer Generation in an Interval](https://arxiv.org/abs/1805.10941).

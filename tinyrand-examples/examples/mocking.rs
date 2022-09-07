@@ -1,9 +1,13 @@
 //! Mocking [`Rand`] behaviour.
 
 use std::cell::RefCell;
-use std::rc::Rc;
 use tinyrand::{Probability, Rand, RandRange, RefCellExt};
 use tinyrand_alloc::{counter, echo, fixed, Mock};
+
+#[test]
+fn run_main() {
+    main();
+}
 
 fn main() {
     with_basic_closure();
@@ -16,6 +20,7 @@ fn main() {
     with_bool();
     with_bool_from_state();
     with_lim();
+    with_range();
 }
 
 fn with_basic_closure() {
@@ -27,23 +32,19 @@ fn with_basic_closure() {
 }
 
 fn with_fancy_closure() {
-    let val = Rc::new(RefCell::new(3u128));
-    let mut rand = {
-        let val = val.clone();
-        Mock::default().with_next_u128(move |_| {
-            *(*val).borrow()
-        })
-    };
+    let val = RefCell::new(3);
+    let mut rand = Mock::default().with_next_u128(|_| *val.borrow());
 
     assert_eq!(3, rand.next_usize());
 
     // ... later ...
-    *(*val).borrow_mut() = 100;
-    assert_eq!(100, rand.next_usize());
+    *val.borrow_mut() = 17;
+    assert_eq!(17, rand.next_usize());
 }
 
 fn with_value_from_state() {
     let mut rand = Mock::default().with_next_u128(|state| {
+        // return number of completed invocations
         state.next_u128_invocations() as u128
     });
     assert_eq!(0, rand.next_usize());
@@ -71,12 +72,12 @@ fn with_counter() {
     assert_eq!(5, rand.next_usize());
     assert_eq!(6, rand.next_usize());
     assert_eq!(7, rand.next_usize());
-    assert_eq!(5, rand.next_usize());
+    assert_eq!(5, rand.next_usize()); // start again
 }
 
 fn with_echo() {
-    let cell = Rc::new(RefCell::new(42));
-    let mut rand = Mock::default().with_next_u128(echo(cell.clone()));
+    let cell = RefCell::new(42);
+    let mut rand = Mock::default().with_next_u128(echo(&cell));
     assert_eq!(42, rand.next_usize());
     cell.set(66);
     assert_eq!(66, rand.next_usize());
@@ -112,4 +113,9 @@ fn with_lim() {
     let day = &DAYS[rand.next_range(0..DAYS.len())];
     assert!(matches!(day, Day::Sun)); // always a Sunday
     assert!(matches!(day, Day::Sun));
+}
+
+fn with_range() {
+    let mut rand = Mock::default().with_next_lim_u128(|_, _| 6);
+    assert_eq!(1006, rand.next_range(1000..2000u32));
 }
