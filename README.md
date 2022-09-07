@@ -11,7 +11,7 @@ Lightweight RNG specification and several ultrafast implementations in Rust. `ti
 * It's very small and doesn't need `std`, meaning it's embeddable — it runs on microcontrollers and bare-metal (no OS) environments.
 * It's very fast. It comes bundled with [Xorshift](https://en.wikipedia.org/wiki/Xorshift) and [Wyrand](https://github.com/wangyi-fudan/wyhash/blob/master/Modern%20Non-Cryptographic%20Hash%20Function%20and%20Pseudorandom%20Number%20Generator.pdf).
 * The RNG behaviour is concisely specified as a handful of traits, independent of the underlying implementations. It makes it easy to swap implementations.
-* It comes with [`Mock`](https://docs.rs/tinyrand-alloc/latest/tinyrand-alloc/mock/index.html) for testing code that depends on random numbers. That is, if you care about code coverage.
+* It comes with [`Mock`](https://docs.rs/tinyrand-alloc/latest/tinyrand_alloc/mock/index.html) for testing code that depends on random numbers. That is, if you care about code coverage.
 
 # Performance
 Below is a comparison of several notable RNGs.
@@ -156,7 +156,7 @@ The mock uses the `alloc` crate, as it requires heap allocation of closures. As 
 cargo add tinyrand-alloc
 ```
 
-At the grassroots level, `Mock` is struct configured with a handful of **delegates**. A delegate is a closure that is invoked by the mock when a particular trait method is called by the system under test. The mock also maintains an internal invocation state that keeps track of the number of times a particular delegate was exercised. So, not only can you mock the behaviour of the `Rand` trait, but also verify the number of types a particular group of related trait methods were called.
+At the grassroots level, [`Mock`](https://docs.rs/tinyrand-alloc/latest/tinyrand_alloc/mock/index.html) is struct configured with a handful of **delegates**. A delegate is a closure that is invoked by the mock when a particular trait method is called by the system under test. The mock also maintains an internal invocation state that keeps track of the number of times a particular delegate was exercised. So, not only can you mock the behaviour of the `Rand` trait, but also verify the number of types a particular group of related trait methods were called.
 
 The delegates are specified by the test case, while the mock instance is passed to the system under test as a `Rand` implementation. Currently, three delegate types are supported:
 

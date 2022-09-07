@@ -5,7 +5,7 @@ edition = "2021"
 readme = "README.md"
 authors = ["Emil Koutanov"]
 license = "MIT"
-description = "Extensions for using tinyrand with stdlib."
+description = "Extensions for using tinyrand with std."
 repository = "https://github.com/obsidiandynamics/tinyrand"
 keywords = ["rand", "rng"]
 
