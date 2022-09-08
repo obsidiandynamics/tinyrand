@@ -147,6 +147,17 @@ let num = rand.next_u64();
 println!("generated {num}");
 ```
 
+The `tinyrand-std` crate also includes a seeded, thread-local `Rand` implementation:
+
+```rust
+use tinyrand::Rand;
+use tinyrand_std::thread_rand;
+
+let mut rand = thread_rand();
+let num = rand.next_u64();
+println!("generated {num}");
+```
+
 # Mocking
 Good testing coverage can sometimes be hard to achieve; doubly so when applications depend on randomness or other sources of nondeterminism. `tinyrand` comes with a mock RNG that offers fine-grained control over the execution of your code.
 
