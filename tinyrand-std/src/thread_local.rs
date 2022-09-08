@@ -10,6 +10,7 @@ thread_local! {
 }
 
 /// A seeded, thread-local [`Rand`] instance.
+#[allow(clippy::module_name_repetitions)]
 pub struct ThreadLocalRand(Rc<RefCell<StdRand>>);
 
 impl Rand for ThreadLocalRand {
@@ -36,7 +37,7 @@ impl Rand for ThreadLocalRand {
 
 /// Obtains a seeded, thread-local [`Rand`] instance.
 pub fn thread_rand() -> ThreadLocalRand {
-    let cell = THREAD_LOCAL_RAND.with(|cell| cell.clone());
+    let cell = THREAD_LOCAL_RAND.with(std::clone::Clone::clone);
     ThreadLocalRand(cell)
 }
 
