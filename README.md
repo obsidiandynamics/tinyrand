@@ -18,12 +18,12 @@ Below is a comparison of several notable RNGs.
 
 | RNG        | Algorithm | Bandwidth (GB/s) |                                                                                       |
 |:-----------|:----------|-----------------:|:--------------------------------------------------------------------------------------|
-| `rand`     | ChaCha12  |              2.2 | <img src="https://via.placeholder.com/12/FF5733/FF5733.png" width="22" height="12"/>  |
-| `fastrand` | Wyrand    |              5.1 | <img src="https://via.placeholder.com/12/FFC733/FFC733.png" width="51" height="12"/>  |
-| `tinyrand` | Wyrand    |             14.6 | <img src="https://via.placeholder.com/12/33FFE0/33FFE0.png" width="146" height="12"/> |
+| `rand`     | ChaCha12  |              2.4 | <img src="https://via.placeholder.com/12/FF5733/FF5733.png" width="24" height="12"/>  |
 | `tinyrand` | Xorshift  |              6.7 | <img src="https://via.placeholder.com/12/33FFE0/33FFE0.png" width="67" height="12"/>  |
+| `fastrand` | Wyrand    |              7.5 | <img src="https://via.placeholder.com/12/FFC733/FFC733.png" width="75" height="12"/>  |
+| `tinyrand` | Wyrand    |             14.6 | <img src="https://via.placeholder.com/12/33FFE0/33FFE0.png" width="146" height="12"/> |
 
-TL;DR: `tinyrand` is almost 3x faster than `fastrand` and more than 6x faster than `rand`.
+TL;DR: `tinyrand` is 2x faster than `fastrand` and 6x faster than `rand`.
 
 # Statistical properties
 It's impossible to tell for certain whether a certain PRNG is good; the answer is probabilistic. Both the Wyrand and Xorshift algorithms stand up well against the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) barrage of tests. (Tested on 30.8 billion samples.) This means `tinyrand` produces numbers that appear sufficiently random and is likely fit for use in most applications.
