@@ -12,6 +12,16 @@ pub fn next_types(mut rand: impl Rand) {
     assert_ne!(0, rand.next_usize());
 }
 
+pub fn numbers_differ(mut rand: impl Rand) {
+    assert_ne!(rand.next_u16() as u32, rand.next_u32());
+    assert_ne!(rand.next_u16() as u64, rand.next_u64());
+    assert_ne!(rand.next_u16() as u128, rand.next_u128());
+    assert_ne!(rand.next_u32() as u64, rand.next_u64());
+    assert_ne!(rand.next_u32() as u128, rand.next_u128());
+    assert_ne!(rand.next_u64() as u128, rand.next_u128());
+    assert_ne!(rand.next_usize() as u128, rand.next_u128());
+}
+
 #[test]
 fn next_types_mock() {
     let mut mock = TestMock::new(fixed(0x1234_5678_9ABC_DEF0));

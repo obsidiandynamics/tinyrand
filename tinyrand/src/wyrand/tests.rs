@@ -1,6 +1,6 @@
 use crate::{Rand, Seeded, Wyrand};
 use crate::duration::tests::random_duration;
-use crate::tests::{lim_types_max, next_types, random_range_u128, random_range_u64, range_types_max};
+use crate::tests::{lim_types_max, next_types, numbers_differ, random_range_u128, random_range_u64, range_types_max};
 
 #[test]
 fn create_default() {
@@ -50,3 +50,6 @@ fn random_duration_wyrand() {
 
 #[test]
 fn range_types_max_wyrand() { range_types_max(Wyrand::default()); }
+
+#[test]
+fn numbers_differ_wyrand() { numbers_differ(Wyrand::default()) }
