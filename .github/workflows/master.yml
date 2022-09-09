@@ -41,4 +41,5 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - run: cargo install criterion
       - run: cargo criterion --bench cri_rand -- next_u64
