@@ -30,5 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
       - run: cargo install cross
       - run: cross test --target i686-unknown-linux-gnu
