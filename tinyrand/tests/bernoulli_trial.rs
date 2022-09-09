@@ -1,3 +1,10 @@
+//! Conducts a series of Bernoulli trials on a [`Rand`] with a different (randomly assigned)
+//! weighting on each trial. Within each trial, H0 asserts that the source is random.
+//! Counts the number of rejected trials and asserts that the number of rejections does not
+//! exceed the maximum expected number of rejections for a random source. I.e., even the best
+//! random source, subjected to sufficient number of trials, will fail some of them. The
+//! number of failed trials should, therefore, remain within the confidence level.
+
 use std::any;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
@@ -22,15 +29,15 @@ fn bernoulli_trial_counter() {
 #[derive(Debug)]
 struct Options {
     cycles: u32,
-    iters: u32,
+    iters: u16,
     confidence_level: f64,
 }
 
 impl Default for Options {
     fn default() -> Self {
         Self {
-            cycles: 100,
-            iters: 10,
+            cycles: 1000,
+            iters: 30,
             confidence_level: 0.95,
         }
     }
@@ -91,7 +98,7 @@ fn generate_weight_for_test(rng: &mut StdRng) -> f64 {
 ///
 /// `n` — number of experiments in the sequence.
 /// `w` — probability of success (equivalently, weight of the coin, where `w` > 0.5 is biased towards heads).
-fn integrate_outcome_probs(n: u32, w: f64, k: u32) -> f64{
+fn integrate_outcome_probs(n: u16, w: f64, k: u16) -> f64{
     let outcome_prob = bernoulli_pmf(k, n, w);
     (0..=n)
         .map(|k| bernoulli_pmf(k, n, w))
@@ -104,18 +111,18 @@ fn integrate_outcome_probs(n: u32, w: f64, k: u32) -> f64{
 /// `k` — number of success outcomes (equivalently, "heads").
 /// `n` — number of experiments in the sequence.
 /// `w` — probability of success (equivalently, weight of the coin, where `w` > 0.5 is biased towards heads).
-fn bernoulli_pmf(k: u32, n: u32, w: f64) -> f64 {
+fn bernoulli_pmf(k: u16, n: u16, w: f64) -> f64 {
     ncr(n, k) as f64 * w.powi(k as i32) * (1.0 - w).powi((n - k) as i32)
 }
 
 /// Calculates <sup>n</sup>C<sub>r</sub>.
-fn ncr(n: u32, r: u32) -> u128 {
+fn ncr(n: u16, r: u16) -> u128 {
     assert!(n >= r);
     fact_trunc(n - r, n) / fact(r)
 }
 
 /// Calculates n!.
-fn fact(n: u32) -> u128 {
+fn fact(n: u16) -> u128 {
     let mut fact = 1;
     for i in 2..=u128::from(n) {
         fact *= i;
@@ -124,7 +131,7 @@ fn fact(n: u32) -> u128 {
 }
 
 /// Calculates n!/(n-m)!.
-fn fact_trunc(m: u32, n: u32) -> u128 {
+fn fact_trunc(m: u16, n: u16) -> u128 {
     let mut fact = 1;
     for i in u128::from(m + 1)..=u128::from(n) {
         fact *= i;
