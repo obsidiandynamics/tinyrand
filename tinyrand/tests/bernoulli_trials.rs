@@ -11,48 +11,54 @@ use rand::{RngCore, SeedableRng};
 use tinyrand::{Counter, Probability, Rand, RandRange, Seeded, Wyrand, Xorshift};
 
 #[test]
-fn bernoulli_trial_wyrand() {
-    bernoulli_trial::<Wyrand>(Options::default());
+fn bernoulli_trials_wyrand() {
+    bernoulli_trials::<Wyrand>(Options::default());
 }
 
 #[test]
-fn bernoulli_trial_xorshift() {
-    bernoulli_trial::<Xorshift>(Options::default());
+fn bernoulli_trials_xorshift() {
+    bernoulli_trials::<Xorshift>(Options::default());
 }
 
 #[test]
 #[should_panic(expected="rejected H0")]
-fn bernoulli_trial_counter() {
-    bernoulli_trial::<Counter>(Options::default());
+fn bernoulli_trials_counter() {
+    bernoulli_trials::<Counter>(Options::default());
 }
 
 #[derive(Debug)]
 struct Options {
-    cycles: u32,
+    /// Number of randomised trials.
+    trials: u32,
+
+    // Experiments per trial.
     iters: u16,
+
+    // Confidence to reject H0 (stream is random). The lower the confidence, the more likely
+    // H1 (stream is nonrandom) is accepted.
     confidence_level: f64,
 }
 
 impl Default for Options {
     fn default() -> Self {
         Self {
-            cycles: 1000,
+            trials: 1000,
             iters: 30,
-            confidence_level: 0.95,
+            confidence_level: 0.90,
         }
     }
 }
 
 impl Options {
     fn validate(&self) {
-        assert!(self.cycles > 0);
+        assert!(self.trials > 0);
         assert!(self.iters > 0);
         assert!(self.confidence_level >= f64::EPSILON);
         assert!(self.confidence_level <= 1.0 - f64::EPSILON);
     }
 }
 
-fn bernoulli_trial<S: Seeded>(opts: Options)
+fn bernoulli_trials<S: Seeded>(opts: Options)
 where
     S::R: RandRange<u64>,
 {
@@ -61,7 +67,7 @@ where
     let mut control_rng = StdRng::seed_from_u64(0);
     let mut rejections = 0;
 
-    for cycle in 0..opts.cycles {
+    for trial in 0..opts.trials {
         let seed = control_rng.next_u64();
         let mut rand = S::seed(seed);
         let weight = generate_weight_for_test(&mut control_rng);
@@ -76,14 +82,14 @@ where
         let p_value = 1.0 - run_within_prob;
 
         if 1.0 - opts.confidence_level > p_value {
-            println!("[{rand_type} cycle {cycle}] rejected H0: {heads} heads from {} runs at weight of {weight}, p={p_value}", opts.iters);
+            println!("[{rand_type} trial {trial}] rejected H0: {heads} heads from {} runs at weight of {weight}, p={p_value}", opts.iters);
             rejections += 1;
         }
     }
 
-    let p_value = f64::from(rejections) / f64::from(opts.cycles);
-    println!("[{rand_type}] rejections/cycles: {rejections}/{}, p={p_value}", opts.cycles);
-    assert!(p_value < 1.0 - opts.confidence_level, "rejected H0: rejections/cycles: {rejections}/{}, p={p_value}", opts.cycles);
+    let p_value = f64::from(rejections) / f64::from(opts.trials);
+    println!("[{rand_type}] rejections/trials: {rejections}/{}, p={p_value}", opts.trials);
+    assert!(p_value < 1.0 - opts.confidence_level, "rejected H0: rejections/cycles: {rejections}/{}, p={p_value}", opts.trials);
 }
 
 fn generate_weight_for_test(rng: &mut StdRng) -> f64 {
