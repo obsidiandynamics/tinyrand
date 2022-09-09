@@ -86,36 +86,12 @@ fn generate_weight_for_test(rng: &mut StdRng) -> f64 {
     p
 }
 
-// #[derive(Debug)]
-// struct TrialOutcome(u32, f64);
-//
-// impl TrialOutcome {
-//     /// Creates a new [`TrialOutcome`].
-//     ///
-//     /// `k` — number of success outcomes.
-//     /// `p` — probability of outcome occurring.
-//     fn new(k: u32, p: f64) -> Self {
-//         assert!(p >= 0.0);
-//         assert!(p <= 1.0);
-//         Self(k, p)
-//     }
-//
-//     fn k(&self) -> u32 {
-//         self.0
-//     }
-//
-//     fn p(&self) -> f64 {
-//         self.1
-//     }
-// }
-
+/// Integrates the probabilities of all trial outcomes that are more likely than
+/// that where `K=k`.
+///
+/// `n` — number of experiments in the sequence.
+/// `w` — probability of success (equivalently, weight of the coin, where `w` > 0.5 is biased towards heads).
 fn integrate_outcome_probs(n: u32, w: f64, k: u32) -> f64{
-    // let mut outcomes = (0..=n)
-    //     .map(|k| TrialOutcome::new(k, bernoulli_pmf(k, n, w)))
-    //     .collect::<Vec<_>>();
-    // outcomes.sort_by(|a, b| b.p().total_cmp(&a.p()));
-    // println!("outcomes={:?}", outcomes);
-
     let outcome_prob = bernoulli_pmf(k, n, w);
     (0..=n)
         .map(|k| bernoulli_pmf(k, n, w))
@@ -132,11 +108,13 @@ fn bernoulli_pmf(k: u32, n: u32, w: f64) -> f64 {
     ncr(n, k) as f64 * w.powi(k as i32) * (1.0 - w).powi((n - k) as i32)
 }
 
+/// Calculates <sup>n</sup>C<sub>r</sub>.
 fn ncr(n: u32, r: u32) -> u128 {
     assert!(n >= r);
     fact_trunc(n - r, n) / fact(r)
 }
 
+/// Calculates n!.
 fn fact(n: u32) -> u128 {
     let mut fact = 1;
     for i in 2..=u128::from(n) {
@@ -145,6 +123,7 @@ fn fact(n: u32) -> u128 {
     fact
 }
 
+/// Calculates n!/(n-m)!.
 fn fact_trunc(m: u32, n: u32) -> u128 {
     let mut fact = 1;
     for i in u128::from(m + 1)..=u128::from(n) {
