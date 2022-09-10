@@ -13,28 +13,54 @@ use rand::{RngCore, SeedableRng};
 use std::ops::Range;
 use statrs::distribution::ContinuousCDF;
 use tinyrand::{Counter, RandRange, Seeded, Wyrand, Xorshift};
-use crate::stats::{bonferroni_correction, Options, Rejection};
+use crate::stats::{bonferroni_correction, Rejection};
 
 #[test]
 fn mean_convergence_wyrand() {
-    mean_convergence::<Wyrand>(mean_convergence_options()).unwrap();
+    mean_convergence::<Wyrand>(Options::default()).unwrap();
 }
 
 #[test]
 fn mean_convergence_xorshift() {
-    mean_convergence::<Xorshift>(mean_convergence_options()).unwrap();
+    mean_convergence::<Xorshift>(Options::default()).unwrap();
 }
 
 #[test]
 fn mean_convergence_counter_should_reject() {
-    assert!(mean_convergence::<Counter>(mean_convergence_options()).is_err());
+    assert!(mean_convergence::<Counter>(Options::default()).is_err());
 }
 
-fn mean_convergence_options() -> Options {
-    Options {
-        trials: 100,
-        iters: 10_000,
-        significance_level: 0.25,
+/// Options for conducting multiple trials.
+#[derive(Debug)]
+pub struct Options {
+    /// Number of randomised trials.
+    pub trials: u16,
+
+    // Experiments per trial.
+    pub iters: u16,
+
+    // Significance level to reject H0 (stream is random). The higher the significance level, the more likely
+    // H1 (stream is nonrandom) is accepted.
+    pub significance_level: f64,
+}
+
+impl Options {
+    /// Checks that the options are valid.
+    pub fn validate(&self) {
+        assert!(self.trials > 0);
+        assert!(self.iters > 0);
+        assert!(self.significance_level >= f64::EPSILON);
+        assert!(self.significance_level <= 1.0 - f64::EPSILON);
+    }
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            trials: 100,
+            iters: 10_000,
+            significance_level: 0.25,
+        }
     }
 }
 

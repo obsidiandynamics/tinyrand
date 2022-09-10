@@ -3,29 +3,29 @@
 //! each subsequent trial, the mask is shifted one to the left and the experiment is repeated.
 pub mod stats;
 
-use crate::stats::{bonferroni_correction, integrate_bernoulli_outcome_probs, Options, Rejection};
+use crate::stats::{bonferroni_correction, integrate_bernoulli_outcome_probs, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use tinyrand::{Counter, Rand, RandRange, Seeded, Wyrand, Xorshift};
 
 #[test]
 fn bitmask_wyrand() {
-    bitmask_trial::<Wyrand>(bitmask_options()).unwrap();
+    bitmask_trial::<Wyrand>(Options::default()).unwrap();
 }
 
 #[test]
 fn bitmask_xorshift() {
-    bitmask_trial::<Xorshift>(bitmask_options()).unwrap();
+    bitmask_trial::<Xorshift>(Options::default()).unwrap();
 }
 
 #[test]
 fn bitmask_counter_should_reject() {
-    assert!(bitmask_trial::<Counter>(bitmask_options()).is_err());
+    assert!(bitmask_trial::<Counter>(Options::default()).is_err());
 }
 
 #[test]
 fn bitmask_broken_should_reject() {
-    assert!(bitmask_trial::<LsbBrokenRand<Wyrand>>(bitmask_options()).is_err());
+    assert!(bitmask_trial::<LsbBrokenRand<Wyrand>>(Options::default()).is_err());
 }
 
 struct LsbBrokenRand<R: Rand>(R);
@@ -44,11 +44,37 @@ impl<S: Seeded + Rand> Seeded for LsbBrokenRand<S> {
     }
 }
 
-fn bitmask_options() -> Options {
-    Options {
-        trials: 256,
-        iters: 30,
-        significance_level: 0.25,
+/// Options for conducting multiple trials.
+#[derive(Debug)]
+pub struct Options {
+    /// Number of trial cycles. Each cycle comprises 64 trials (one for each bit of a `u64`).
+    pub cycles: u16,
+
+    // Experiments per trial.
+    pub iters: u16,
+
+    // Significance level to reject H0 (stream is random). The higher the significance level, the more likely
+    // H1 (stream is nonrandom) is accepted.
+    pub significance_level: f64,
+}
+
+impl Options {
+    /// Checks that the options are valid.
+    pub fn validate(&self) {
+        assert!(self.cycles > 0);
+        assert!(self.iters > 0);
+        assert!(self.significance_level >= f64::EPSILON);
+        assert!(self.significance_level <= 1.0 - f64::EPSILON);
+    }
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            cycles: 2,
+            iters: 30,
+            significance_level: 0.25,
+        }
     }
 }
 
@@ -60,7 +86,7 @@ where
     let mut control_rng = StdRng::seed_from_u64(0);
 
     let mut trial = 0;
-    bonferroni_correction(opts.significance_level, opts.trials, || {
+    bonferroni_correction(opts.significance_level, opts.cycles * 64, || {
         let seed = control_rng.next_u64();
         let mut rand = S::seed(seed);
         let mask = 1u64 << (trial % 64);

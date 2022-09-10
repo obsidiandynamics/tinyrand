@@ -9,31 +9,57 @@
 
 pub mod stats;
 
-use crate::stats::{bonferroni_correction, integrate_bernoulli_outcome_probs, Options, Rejection};
+use crate::stats::{bonferroni_correction, integrate_bernoulli_outcome_probs, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use tinyrand::{Counter, Probability, Rand, RandRange, Seeded, Wyrand, Xorshift};
 
 #[test]
 fn coin_flip_wyrand() {
-    coin_flip::<Wyrand>(coin_flip_options()).unwrap();
+    coin_flip::<Wyrand>(Options::default()).unwrap();
 }
 
 #[test]
 fn coin_flip_xorshift() {
-    coin_flip::<Xorshift>(coin_flip_options()).unwrap();
+    coin_flip::<Xorshift>(Options::default()).unwrap();
 }
 
 #[test]
 fn coin_flip_counter_should_reject() {
-    assert!(coin_flip::<Counter>(coin_flip_options()).is_err());
+    assert!(coin_flip::<Counter>(Options::default()).is_err());
 }
 
-fn coin_flip_options() -> Options {
-    Options {
-        trials: 100,
-        iters: 30,
-        significance_level: 0.25,
+/// Options for conducting multiple trials.
+#[derive(Debug)]
+pub struct Options {
+    /// Number of randomised trials.
+    pub trials: u16,
+
+    // Experiments per trial.
+    pub iters: u16,
+
+    // Significance level to reject H0 (stream is random). The higher the significance level, the more likely
+    // H1 (stream is nonrandom) is accepted.
+    pub significance_level: f64,
+}
+
+impl Options {
+    /// Checks that the options are valid.
+    pub fn validate(&self) {
+        assert!(self.trials > 0);
+        assert!(self.iters > 0);
+        assert!(self.significance_level >= f64::EPSILON);
+        assert!(self.significance_level <= 1.0 - f64::EPSILON);
+    }
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            trials: 100,
+            iters: 30,
+            significance_level: 0.25,
+        }
     }
 }
 

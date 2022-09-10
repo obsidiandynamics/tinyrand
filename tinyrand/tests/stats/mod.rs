@@ -1,28 +1,4 @@
-//! Utilities for statistical hypothesis testing.
-
-/// Options for conducting multiple trials.
-#[derive(Debug)]
-pub struct Options {
-    /// Number of randomised trials.
-    pub trials: u16,
-
-    // Experiments per trial.
-    pub iters: u16,
-
-    // Significance level to reject H0 (stream is random). The higher the significance level, the more likely
-    // H1 (stream is nonrandom) is accepted.
-    pub significance_level: f64,
-}
-
-impl Options {
-    /// Checks that the options are valid.
-    pub fn validate(&self) {
-        assert!(self.trials > 0);
-        assert!(self.iters > 0);
-        assert!(self.significance_level >= f64::EPSILON);
-        assert!(self.significance_level <= 1.0 - f64::EPSILON);
-    }
-}
+//! Utilities for statistical hypothesis testing, combinatorics and distributions.
 
 /// Describes the rejection of a specific trial.
 #[derive(Debug)]
