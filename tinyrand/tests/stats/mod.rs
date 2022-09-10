@@ -71,7 +71,7 @@ pub fn binomial_pmf(k: u16, n: u16, p: f64) -> f64 {
 /// Calculates <sup>n</sup>C<sub>r</sub>.
 pub fn ncr(n: u16, r: u16) -> u128 {
     assert!(n >= r);
-    fact_trunc(n - r, n) / fact(r)
+    fact_trunc(r, n) / fact(n - r)
 }
 
 /// Calculates n!.
@@ -83,7 +83,7 @@ pub fn fact(n: u16) -> u128 {
     fact
 }
 
-/// Calculates n!/(n-m)!.
+/// Calculates n!/m!.
 pub fn fact_trunc(m: u16, n: u16) -> u128 {
     let mut fact = 1;
     for i in u128::from(m + 1)..=u128::from(n) {
