@@ -1,9 +1,10 @@
-//! Conducts a series of Bernoulli trials on a [`Rand`] with a different (randomly assigned)
-//! weighting on each trial. Within each trial, H0 asserts that the source is random.
-//! Counts the number of rejected trials and asserts that the number of rejections does not
-//! exceed the maximum expected number of rejections for a random source. I.e., even the best
-//! random source, subjected to sufficient number of trials, will fail some of them. The
-//! number of failed trials should, therefore, remain within the confidence level.
+//! Conducts a series of Bernoulli trials on a [`Rand`] with a different (randomly chosen)
+//! weighting on each trial. Within each trial, H0 asserts that the source is random. (I.e.,
+//! the number of 'heads' falls within a statistically acceptable interval.)
+//! Multiple Bernoulli trials are run using Bonferroni correction to depress 
+//! the Type I error rate. I.e., even an ideal random source, subjected to sufficient number 
+//! of trials, will fail some of them. The significance level is, therefore, scaled to minimise
+//! false rejections.
 
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
@@ -41,7 +42,7 @@ struct Options {
 impl Default for Options {
     fn default() -> Self {
         Self {
-            trials: 1_000,
+            trials: 100,
             iters: 30,
             significance_level: 0.25,
         }
@@ -137,7 +138,7 @@ fn integrate_outcome_probs(n: u16, w: f64, k: u16) -> f64 {
 
 /// Obtains the Bernoulli Probability Mass Function.
 ///
-/// `k` — number of success outcomes (equivalently, "heads").
+/// `k` — number of success outcomes (equivalently, 'heads').
 /// `n` — number of experiments in the sequence.
 /// `w` — probability of success (equivalently, weight of the coin, where `w` > 0.5 is biased towards heads).
 fn bernoulli_pmf(k: u16, n: u16, w: f64) -> f64 {
