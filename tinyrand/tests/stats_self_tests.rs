@@ -1,4 +1,7 @@
 //! Self tests for the `stats` module.
+//!
+//! If these tests were to be added as unit tests of `stats`, they would be repeated for each
+//! integration test that uses `stats`.
 
 use crate::stats::{bernoulli_pmf, fact, fact_trunc, ncr};
 
