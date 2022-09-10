@@ -3,17 +3,27 @@
 //! If these tests were to be added as unit tests of `stats`, they would be repeated for each
 //! integration test that uses `stats`.
 
-use crate::stats::{binomial_pmf, fact, fact_trunc, ncr};
+use crate::stats::{binomial_pmf, fact, fact_trunc, ncr, poisson_pmf};
 
 pub mod stats;
 
 #[test]
 fn test_bernoulli_pmf() {
-    assert_float(0.059535, binomial_pmf(4, 6, 0.3));
+    assert_float_epsilon(0.059535, binomial_pmf(4, 6, 0.3));
 }
 
-fn assert_float(lhs: f64, rhs: f64) {
-    assert!((rhs - lhs).abs() <= f64::EPSILON, "lhs={lhs} rhs={rhs}");
+#[test]
+fn test_poisson_pmf() {
+    assert_float_epsilon(0.14037389581428056, poisson_pmf(3, 5.0));
+    assert_float_epsilon(0.1754673697678507, poisson_pmf(5, 5.0));
+}
+
+fn assert_float_epsilon(lhs: f64, rhs: f64) {
+    assert_float(lhs, rhs, f64::EPSILON)
+}
+
+fn assert_float(lhs: f64, rhs: f64, delta: f64) {
+    assert!((rhs - lhs).abs() <= delta, "lhs={lhs} rhs={rhs}");
 }
 
 #[test]

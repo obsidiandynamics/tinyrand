@@ -3,7 +3,7 @@
 //! each subsequent trial, the mask is shifted one to the left and the hypothesis is retested.
 pub mod stats;
 
-use crate::stats::{bonferroni_correction, integrate_binomial_probs, Rejection};
+use crate::stats::{bonferroni_correction, integrate_binomial, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use tinyrand::{Counter, Rand, RandRange, Seeded, Wyrand, Xorshift};
@@ -99,7 +99,7 @@ where
                 set_bits += 1;
             }
         }
-        let run_within_prob = integrate_binomial_probs(opts.iters, 0.5, set_bits);
+        let run_within_prob = integrate_binomial(opts.iters, 0.5, set_bits);
         let p_value = 1.0 - run_within_prob;
         p_value
     })

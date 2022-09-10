@@ -6,7 +6,7 @@
 //! a random source, the number of 1s (and 0s) follows a Bernoulli process.
 pub mod stats;
 
-use crate::stats::{bonferroni_correction, integrate_binomial_probs, Rejection};
+use crate::stats::{bonferroni_correction, integrate_binomial, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use tinyrand::{Counter, Rand, RandRange, Seeded, Wyrand, Xorshift};
@@ -74,7 +74,7 @@ where
         };
         trial += 1;
         let ones = count_ones(word);
-        let run_within_prob = integrate_binomial_probs(32, 0.5, u16::from(ones));
+        let run_within_prob = integrate_binomial(32, 0.5, u16::from(ones));
         let p_value = 1.0 - run_within_prob;
         p_value
     })

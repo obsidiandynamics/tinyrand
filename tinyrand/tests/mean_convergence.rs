@@ -1,10 +1,14 @@
 //! Conducts a series of trials on a [`Rand`] with a different (randomly chosen)
 //! integer generation range on each trial. Within each trial, H0 asserts that the source is random. (I.e.,
-//! the sum of the samples falls within a statistically acceptable interval.)
+//! the sum of the sampled values falls within a statistically acceptable range.)
 //! Multiple trials are run using Bonferroni correction to depress
 //! the Type I error rate. I.e., even an ideal random source, subjected to sufficient number
 //! of trials, will fail some of them. The significance level is, therefore, scaled to minimise
 //! false rejections.
+///
+/// Each trial computes the sum of a set of values drawn from a scaled uniform distribution. The Gaussian distribution
+/// is used as an [approximation of the Irwin-Hall distribution](https://en.wikipedia.org/wiki/Irwin%E2%80%93Hall_distribution#Approximating_a_Normal_distribution),
+/// with the unscaled mean and variance parameters set to _n_/2 and _n_/12 respectively.
 
 pub mod stats;
 
@@ -64,13 +68,6 @@ impl Default for Options {
     }
 }
 
-/// Runs a series of mean convergence trials using Bonferroni correction to depress the Type I error rate.
-///
-/// Each trial obtains the mean of a set of samples drawn from a scaled uniform distribution. The sum
-/// of the values is expected to fall within a statistically acceptable range. The Gaussian distribution
-/// is used as an [approximation of the Irwin-Hall distribution](https://en.wikipedia.org/wiki/Irwin%E2%80%93Hall_distribution#Approximating_a_Normal_distribution),
-/// with the unscaled mean and variance
-/// parameters set to _n_/2 and _n_/12 respectively, where _n_ is the number of samples.
 fn mean_convergence<S: Seeded>(opts: Options) -> Result<(), Vec<Rejection>>
 where
     S::R: RandRange<u64>,

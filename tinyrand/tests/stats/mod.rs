@@ -42,18 +42,36 @@ pub fn bonferroni_correction(
     }
 }
 
-/// Integrates the probabilities of all Bernoulli trial outcomes that are more likely than
+/// Integrates the discrete probabilities from the Binomial PMF that are more likely than
 /// that where _K_=_k_.
 ///
 /// `n` — number of experiments in the sequence.
 /// `p` — probability of success (equivalently, weight of the coin, where `p` > 0.5 is biased towards heads).
-pub fn integrate_binomial_probs(n: u16, p: f64, k: u16) -> f64 {
+pub fn integrate_binomial(n: u16, p: f64, k: u16) -> f64 {
     // find the probability of k successes in n experiments
     let outcome_prob = binomial_pmf(k, n, p);
 
     // sum the probabilities of all other outcomes which are more probable than those with k successes
     (0..=n)
         .map(|k| binomial_pmf(k, n, p))
+        .filter(|&p| p > outcome_prob)
+        .sum::<f64>()
+        .min(1.0)
+}
+
+/// Integrates the discrete probabilities from the Poisson PMF that are more likely than that
+/// where _K_=_k_.
+///
+/// `lambda` — the arrival rate.
+pub fn integrate_poisson(lambda: f64, k: u16) -> f64 {
+    let outcome_prob = poisson_pmf(k, lambda);
+    let dist_from_lambda = (f64::from(k) - lambda).abs();
+
+    // max_events is the upper bound in our integral range; there is no point going above it as all
+    // the probabilities there are lower than outcome_prob
+    let max_events = (lambda + dist_from_lambda).ceil() as u16;
+    (0..=max_events)
+        .map(|k| poisson_pmf(k, lambda))
         .filter(|&p| p > outcome_prob)
         .sum::<f64>()
         .min(1.0)
@@ -66,6 +84,14 @@ pub fn integrate_binomial_probs(n: u16, p: f64, k: u16) -> f64 {
 /// `p` — probability of success (equivalently, the weight of the coin, where `p` > 0.5 is biased towards heads).
 pub fn binomial_pmf(k: u16, n: u16, p: f64) -> f64 {
     ncr(n, k) as f64 * p.powi(k as i32) * (1.0 - p).powi((n - k) as i32)
+}
+
+/// Obtains the Poisson Probability Mass Function.
+///
+/// `lambda` — the arrival rate.
+/// `k` — number of events.
+pub fn poisson_pmf(k: u16, lambda: f64) -> f64 {
+    lambda.powi(i32::from(k)) * (-lambda).exp() / fact(k) as f64
 }
 
 /// Calculates <sup>n</sup>C<sub>r</sub>.

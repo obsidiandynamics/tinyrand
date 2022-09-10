@@ -9,7 +9,7 @@
 
 pub mod stats;
 
-use crate::stats::{bonferroni_correction, integrate_binomial_probs, Rejection};
+use crate::stats::{bonferroni_correction, integrate_binomial, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use tinyrand::{Counter, Probability, Rand, RandRange, Seeded, Wyrand, Xorshift};
@@ -81,7 +81,7 @@ where
                 heads += 1;
             }
         }
-        let run_within_prob = integrate_binomial_probs(opts.iters, weight, heads);
+        let run_within_prob = integrate_binomial(opts.iters, weight, heads);
         let p_value = 1.0 - run_within_prob;
         p_value
     })
