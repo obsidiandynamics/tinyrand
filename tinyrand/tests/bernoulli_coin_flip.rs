@@ -15,21 +15,21 @@ use rand::{RngCore, SeedableRng};
 use tinyrand::{Counter, Probability, Rand, RandRange, Seeded, Wyrand, Xorshift};
 
 #[test]
-fn bernoulli_trial_wyrand() {
-    coin_flip::<Wyrand>(bernoulli_trial_options()).unwrap();
+fn coin_flip_wyrand() {
+    coin_flip::<Wyrand>(coin_flip_options()).unwrap();
 }
 
 #[test]
-fn bernoulli_trial_xorshift() {
-    coin_flip::<Xorshift>(bernoulli_trial_options()).unwrap();
+fn coin_flip_xorshift() {
+    coin_flip::<Xorshift>(coin_flip_options()).unwrap();
 }
 
 #[test]
-fn bernoulli_trial_counter_should_reject() {
-    assert!(coin_flip::<Counter>(bernoulli_trial_options()).is_err());
+fn coin_flip_counter_should_reject() {
+    assert!(coin_flip::<Counter>(coin_flip_options()).is_err());
 }
 
-fn bernoulli_trial_options() -> Options {
+fn coin_flip_options() -> Options {
     Options {
         trials: 100,
         iters: 30,
@@ -37,7 +37,6 @@ fn bernoulli_trial_options() -> Options {
     }
 }
 
-/// Runs a series of Bernoulli trials using Bonferroni correction to depress the Type I error rate.
 fn coin_flip<S: Seeded>(opts: Options) -> Result<(), Vec<Rejection>>
 where
     S::R: RandRange<u64>,
