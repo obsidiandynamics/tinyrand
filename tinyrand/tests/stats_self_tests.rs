@@ -3,13 +3,13 @@
 //! If these tests were to be added as unit tests of `stats`, they would be repeated for each
 //! integration test that uses `stats`.
 
-use crate::stats::{bernoulli_pmf, fact, fact_trunc, ncr};
+use crate::stats::{binomial_pmf, fact, fact_trunc, ncr};
 
 pub mod stats;
 
 #[test]
 fn test_bernoulli_pmf() {
-    assert_float(0.059535, bernoulli_pmf(4, 6, 0.3));
+    assert_float(0.059535, binomial_pmf(4, 6, 0.3));
 }
 
 fn assert_float(lhs: f64, rhs: f64) {

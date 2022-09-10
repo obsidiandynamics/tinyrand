@@ -43,26 +43,29 @@ pub fn bonferroni_correction(
 }
 
 /// Integrates the probabilities of all Bernoulli trial outcomes that are more likely than
-/// that where `K=k`.
+/// that where _K_=_k_.
 ///
 /// `n` — number of experiments in the sequence.
-/// `w` — probability of success (equivalently, weight of the coin, where `w` > 0.5 is biased towards heads).
-pub fn integrate_bernoulli_outcome_probs(n: u16, w: f64, k: u16) -> f64 {
-    let outcome_prob = bernoulli_pmf(k, n, w);
+/// `p` — probability of success (equivalently, weight of the coin, where `p` > 0.5 is biased towards heads).
+pub fn integrate_binomial_probs(n: u16, p: f64, k: u16) -> f64 {
+    // find the probability of k successes in n experiments
+    let outcome_prob = binomial_pmf(k, n, p);
+
+    // sum the probabilities of all other outcomes which are more probable than those with k successes
     (0..=n)
-        .map(|k| bernoulli_pmf(k, n, w))
+        .map(|k| binomial_pmf(k, n, p))
         .filter(|&p| p > outcome_prob)
         .sum::<f64>()
         .min(1.0)
 }
 
-/// Obtains the Bernoulli Probability Mass Function.
+/// Obtains the Binomial Probability Mass Function.
 ///
-/// `k` — number of success outcomes (equivalently, 'heads').
-/// `n` — number of experiments in the sequence.
-/// `w` — probability of success (equivalently, weight of the coin, where `w` > 0.5 is biased towards heads).
-pub fn bernoulli_pmf(k: u16, n: u16, w: f64) -> f64 {
-    ncr(n, k) as f64 * w.powi(k as i32) * (1.0 - w).powi((n - k) as i32)
+/// `k` — number of success outcomes (equivalently, the number of heads).
+/// `n` — number of experiments in the sequence (equivalently, the number of coin flips).
+/// `p` — probability of success (equivalently, the weight of the coin, where `p` > 0.5 is biased towards heads).
+pub fn binomial_pmf(k: u16, n: u16, p: f64) -> f64 {
+    ncr(n, k) as f64 * p.powi(k as i32) * (1.0 - p).powi((n - k) as i32)
 }
 
 /// Calculates <sup>n</sup>C<sub>r</sub>.
