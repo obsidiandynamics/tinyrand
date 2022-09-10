@@ -20,18 +20,18 @@ use tinyrand::{Counter, RandRange, Seeded, Wyrand, Xorshift};
 use crate::stats::{bonferroni_correction, Rejection};
 
 #[test]
-fn mean_convergence_wyrand() {
-    mean_convergence::<Wyrand>(Options::default()).unwrap();
+fn sum_convergence_wyrand() {
+    sum_convergence::<Wyrand>(Options::default()).unwrap();
 }
 
 #[test]
-fn mean_convergence_xorshift() {
-    mean_convergence::<Xorshift>(Options::default()).unwrap();
+fn sum_convergence_xorshift() {
+    sum_convergence::<Xorshift>(Options::default()).unwrap();
 }
 
 #[test]
-fn mean_convergence_counter_should_reject() {
-    assert!(mean_convergence::<Counter>(Options::default()).is_err());
+fn sum_convergence_counter_should_reject() {
+    assert!(sum_convergence::<Counter>(Options::default()).is_err());
 }
 
 /// Options for conducting multiple trials.
@@ -68,7 +68,7 @@ impl Default for Options {
     }
 }
 
-fn mean_convergence<S: Seeded>(opts: Options) -> Result<(), Vec<Rejection>>
+fn sum_convergence<S: Seeded>(opts: Options) -> Result<(), Vec<Rejection>>
 where
     S::R: RandRange<u64>,
 {
