@@ -4,6 +4,7 @@
 //! trial, we assume that the values of individual bits are IID with probability of 0.5,
 //! verifying that the number of times the bit is set to 1 is within the expected range. For
 //! a random source, the number of 1s (and 0s) follows a Bernoulli process.
+
 pub mod stats;
 
 use crate::stats::{holm_bonferroni_seq_correction, integrate_binomial, Rejection};

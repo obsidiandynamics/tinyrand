@@ -2,10 +2,6 @@
 //! weighting on each trial, simulating a run of coin flips. Within each trial,
 //! H0 asserts that the source is random. (I.e.,
 //! the number of 'heads' falls within a statistically acceptable interval.)
-//! Multiple Bernoulli trials are run using Bonferroni correction to depress
-//! the Type I error rate. I.e., even an ideal random source, subjected to sufficient number
-//! of trials, will fail some of them. The significance level is, therefore, scaled to minimise
-//! false rejections.
 
 pub mod stats;
 

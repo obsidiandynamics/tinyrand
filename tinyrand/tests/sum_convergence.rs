@@ -1,10 +1,6 @@
 //! Conducts a series of trials on a [`Rand`] with a different (randomly chosen)
 //! integer generation range on each trial. Within each trial, H0 asserts that the source is random. (I.e.,
 //! the sum of the sampled values falls within a statistically acceptable range.)
-//! Multiple trials are run using Bonferroni correction to depress
-//! the Type I error rate. I.e., even an ideal random source, subjected to sufficient number
-//! of trials, will fail some of them. The significance level is, therefore, scaled to minimise
-//! false rejections.
 ///
 /// Each trial computes the sum of a set of values drawn from a scaled uniform distribution. The Gaussian distribution
 /// is used as an [approximation of the Irwin-Hall distribution](https://en.wikipedia.org/wiki/Irwin%E2%80%93Hall_distribution#Approximating_a_Normal_distribution),
@@ -21,17 +17,52 @@ use crate::stats::{holm_bonferroni_seq_correction, Rejection};
 
 #[test]
 fn sum_convergence_wyrand() {
-    sum_convergence::<Wyrand>(Options::default()).unwrap();
+    sum_convergence::<Wyrand>(0, Options::default()).unwrap();
+}
+
+#[test]
+fn sum_convergence_wyrand_lag_1() {
+    sum_convergence::<Wyrand>(1, Options::default()).unwrap();
+}
+
+#[test]
+fn sum_convergence_wyrand_lag_2() {
+    sum_convergence::<Wyrand>(2, Options::default()).unwrap();
+}
+
+#[test]
+fn sum_convergence_wyrand_lag_4() {
+    sum_convergence::<Wyrand>(4, Options::default()).unwrap();
 }
 
 #[test]
 fn sum_convergence_xorshift() {
-    sum_convergence::<Xorshift>(Options::default()).unwrap();
+    sum_convergence::<Xorshift>(0, Options::default()).unwrap();
+}
+
+#[test]
+fn sum_convergence_xorshift_lag_1() {
+    sum_convergence::<Xorshift>(1, Options::default()).unwrap();
+}
+
+#[test]
+fn sum_convergence_xorshift_lag_2() {
+    sum_convergence::<Xorshift>(2, Options::default()).unwrap();
+}
+
+#[test]
+fn sum_convergence_xorshift_lag_4() {
+    sum_convergence::<Xorshift>(4, Options::default()).unwrap();
 }
 
 #[test]
 fn sum_convergence_counter_should_reject() {
-    assert!(sum_convergence::<Counter>(Options::default()).is_err());
+    assert!(sum_convergence::<Counter>(0, Options::default()).is_err());
+}
+
+#[test]
+fn sum_convergence_counter_should_reject_lag_1() {
+    assert!(sum_convergence::<Counter>(1, Options::default()).is_err());
 }
 
 /// Options for conducting multiple trials.
@@ -41,7 +72,7 @@ pub struct Options {
     pub trials: u16,
 
     // Experiments per trial.
-    pub iters: u16,
+    pub iters: u32,
 
     // Significance level to reject H0 (stream is random). The higher the significance level, the more likely
     // H1 (stream is nonrandom) is accepted.
@@ -62,13 +93,13 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             trials: 100,
-            iters: 10_000,
-            significance_level: 0.25,
+            iters: 1_000,
+            significance_level: 0.025,
         }
     }
 }
 
-fn sum_convergence<S: Seeded>(opts: Options) -> Result<(), Vec<Rejection>>
+fn sum_convergence<S: Seeded>(lag: u8, opts: Options) -> Result<(), Vec<Rejection>>
 where
     S::R: RandRange<u64>,
 {
@@ -84,7 +115,12 @@ where
         let range = generate_range_for_test(&mut control_rng);
 
         let sum = (0..opts.iters)
-            .map(|_| u128::from(rand.next_range(range.clone())))
+            .map(|_| {
+                for _ in 0..lag {
+                    rand.next_range(range.clone());
+                }
+                u128::from(rand.next_range(range.clone()))
+            })
             .sum::<u128>();
 
         let span = (range.end - range.start) as f64;
