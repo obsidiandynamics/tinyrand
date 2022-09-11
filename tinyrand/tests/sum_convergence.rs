@@ -17,7 +17,7 @@ use rand::{RngCore, SeedableRng};
 use std::ops::Range;
 use statrs::distribution::ContinuousCDF;
 use tinyrand::{Counter, RandRange, Seeded, Wyrand, Xorshift};
-use crate::stats::{bonferroni_correction, Rejection};
+use crate::stats::{holm_bonferroni_seq_correction, Rejection};
 
 #[test]
 fn sum_convergence_wyrand() {
@@ -78,7 +78,7 @@ where
     let dist_std_dev = (opts.iters as f64 / 12.0).sqrt();
     let dist = statrs::distribution::Normal::new(dist_mean, dist_std_dev).unwrap();
 
-    bonferroni_correction(opts.significance_level, opts.trials, || {
+    holm_bonferroni_seq_correction(opts.significance_level, opts.trials, || {
         let seed = control_rng.next_u64();
         let mut rand = S::seed(seed);
         let range = generate_range_for_test(&mut control_rng);

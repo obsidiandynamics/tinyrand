@@ -3,7 +3,7 @@
 //! each subsequent trial, the mask is shifted by one to the left and the hypothesis is retested.
 pub mod stats;
 
-use crate::stats::{bonferroni_correction, integrate_binomial, Rejection};
+use crate::stats::{holm_bonferroni_seq_correction, integrate_binomial, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use tinyrand::{Counter, Rand, RandRange, Seeded, Wyrand, Xorshift};
@@ -88,7 +88,7 @@ where
     let mut control_rng = StdRng::seed_from_u64(0);
 
     let mut trial = 0;
-    bonferroni_correction(opts.significance_level, opts.cycles * 64, || {
+    holm_bonferroni_seq_correction(opts.significance_level, opts.cycles * 64, || {
         let seed = control_rng.next_u64();
         let mut rand = S::seed(seed);
         let mask = 1u64 << (trial % 64);

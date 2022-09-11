@@ -10,7 +10,7 @@ use rand::rngs::StdRng;
 use rand::{Rng, RngCore, SeedableRng};
 use std::ops::Range;
 use tinyrand::{Counter, RandRange, Seeded, Wyrand, Xorshift};
-use crate::stats::{bonferroni_correction, integrate_poisson, Rejection};
+use crate::stats::{holm_bonferroni_seq_correction, integrate_poisson, Rejection};
 
 #[test]
 fn collision_wyrand() {
@@ -54,7 +54,7 @@ impl Options {
 impl Default for Options {
     fn default() -> Self {
         Self {
-            trials: 100,
+            trials: 1000,
             iters: 30,
             significance_level: 0.25,
         }
@@ -68,7 +68,7 @@ where
     opts.validate();
     let mut control_rng = StdRng::seed_from_u64(0);
 
-    bonferroni_correction(opts.significance_level, opts.trials, || {
+    holm_bonferroni_seq_correction(opts.significance_level, opts.trials, || {
         let seed = control_rng.next_u64();
         let mut rand = S::seed(seed);
         let range = generate_range_for_test(&mut control_rng);

@@ -9,7 +9,7 @@
 
 pub mod stats;
 
-use crate::stats::{bonferroni_correction, integrate_binomial, Rejection};
+use crate::stats::{holm_bonferroni_seq_correction, integrate_binomial, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use tinyrand::{Counter, Probability, Rand, RandRange, Seeded, Wyrand, Xorshift};
@@ -56,7 +56,7 @@ impl Options {
 impl Default for Options {
     fn default() -> Self {
         Self {
-            trials: 100,
+            trials: 1000,
             iters: 30,
             significance_level: 0.25,
         }
@@ -70,7 +70,7 @@ where
     opts.validate();
     let mut control_rng = StdRng::seed_from_u64(0);
 
-    bonferroni_correction(opts.significance_level, opts.trials, || {
+    holm_bonferroni_seq_correction(opts.significance_level, opts.trials, || {
         let seed = control_rng.next_u64();
         let mut rand = S::seed(seed);
         let weight = generate_weight_for_test(&mut control_rng);

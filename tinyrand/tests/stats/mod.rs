@@ -12,21 +12,21 @@ pub struct Rejection {
 
 /// Runs a series of trials using Bonferroni correction to depress the Type I error rate.
 ///
-/// The given `trial` closure is repeated `num_trials` times. The resulting p-value is compared
-/// against the scaled `significance_level` (by a factor of 1/`num_trials`, in accordance with
+/// The given `trial` closure is repeated _n_ times. The resulting p-value is compared
+/// against the scaled `significance_level` (by a factor of 1/_n_, in accordance with
 /// Bonferroni) to identify rejections.
 pub fn bonferroni_correction(
     significance_level: f64,
-    num_trials: u16,
+    n: u16,
     mut trial: impl FnMut() -> f64,
 ) -> Result<(), Vec<Rejection>> {
-    assert!(num_trials > 0);
+    assert!(n > 0);
     assert!(significance_level >= f64::EPSILON);
     assert!(significance_level <= 1.0 - f64::EPSILON);
 
-    let alpha = significance_level / f64::from(num_trials);
+    let alpha = significance_level / f64::from(n);
 
-    let rejections = (0..num_trials)
+    let rejections = (0..n)
         .map(|_| trial())
         .filter(|&p_value| p_value < alpha)
         .collect::<Vec<_>>();
@@ -38,6 +38,48 @@ pub fn bonferroni_correction(
             .into_iter()
             .map(|p_value| Rejection { alpha, p_value })
             .collect();
+        Err(rejections)
+    }
+}
+
+/// Runs a series of trials using Holm-Bonferroni sequential correction to depress the Type I error rate.
+///
+/// The given `trial` closure is repeated _n_ times. The resulting p-values are sorted in ascending
+/// order. Each _p_<sub>_i_</sub> is subsequently compared against an adjusted α, where α = 1/_i_ * `significance_level`.
+pub fn holm_bonferroni_seq_correction(
+    significance_level: f64,
+    n: u16,
+    mut trial: impl FnMut() -> f64,
+) -> Result<(), Vec<Rejection>> {
+    assert!(n > 0);
+    assert!(significance_level >= f64::EPSILON);
+    assert!(significance_level <= 1.0 - f64::EPSILON);
+
+    // run the trials, capturing the p-values
+    let mut p_values = (0..n)
+        .map(|_| trial())
+        .collect::<Vec<_>>();
+
+    // arrange p-values in ascending order
+    p_values.sort_by(|a, b|a.total_cmp(b));
+
+    // println!("p_values={p_values:?}");
+
+    // compare ordered p-values against the incrementally adjusted alpha
+    let num_trials = f64::from(n);
+    let rejections = p_values.into_iter().enumerate()
+        .map(|(i, p_value)| {
+            let alpha = significance_level / (num_trials - i as f64);
+            Rejection { alpha, p_value }
+        })
+        .filter(|rejection| {
+            rejection.p_value < rejection.alpha
+        })
+        .collect::<Vec<_>>();
+
+    if rejections.is_empty() {
+        Ok(())
+    } else {
         Err(rejections)
     }
 }

@@ -6,7 +6,7 @@
 //! a random source, the number of 1s (and 0s) follows a Bernoulli process.
 pub mod stats;
 
-use crate::stats::{bonferroni_correction, integrate_binomial, Rejection};
+use crate::stats::{holm_bonferroni_seq_correction, integrate_binomial, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use tinyrand::{Counter, Rand, RandRange, Seeded, Wyrand, Xorshift};
@@ -64,7 +64,7 @@ where
     let mut control_rng = StdRng::seed_from_u64(0);
 
     let mut trial = 0;
-    bonferroni_correction(opts.significance_level, opts.cycles * 2, || {
+    holm_bonferroni_seq_correction(opts.significance_level, opts.cycles * 2, || {
         let seed = control_rng.next_u64();
         let mut rand = S::seed(seed);
         let word = if trial % 1 == 0 {
