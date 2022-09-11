@@ -1,5 +1,7 @@
 //! Utilities for statistical hypothesis testing, combinatorics and distributions.
 
+use statrs::distribution::Discrete;
+
 /// Describes the rejection of a specific trial.
 #[derive(Debug)]
 pub struct Rejection {
@@ -80,6 +82,49 @@ pub fn holm_bonferroni_seq_correction(
     if rejections.is_empty() {
         Ok(())
     } else {
+        Err(rejections)
+    }
+}
+
+/// Runs a series of trials using Binomial correction to depress the Type I error rate.
+///
+/// The given `trial` closure is repeated _n_ times. The number of permissible failures is
+/// determined by modelling the process as a Bernoulli (meta-)trial.
+pub fn binomial_correction(
+    significance_level: f64,
+    n: u16,
+    mut trial: impl FnMut() -> f64,
+) -> Result<(), Vec<Rejection>> {
+    assert!(n > 0);
+    assert!(significance_level >= f64::EPSILON);
+    assert!(significance_level <= 1.0 - f64::EPSILON);
+
+    let mut rejections = (0..n)
+        .map(|_| trial())
+        .filter(|&p_value| p_value < significance_level)
+        .collect::<Vec<_>>();
+
+    let mut prob_sum = 0.0;
+    let mut allowed_failures = 0;
+    let dist = statrs::distribution::Binomial::new(significance_level, u64::from(n)).unwrap();
+    for k in 0..n {
+        prob_sum += dist.pmf(u64::from(k));
+        allowed_failures += 1;
+        if prob_sum > 1.0 - significance_level {
+            break;
+        }
+    }
+
+    //println!("permitting at most {allowed_failures} at significance {significance_level}; {} observed", rejections.len());
+    if rejections.len() <= allowed_failures {
+        Ok(())
+    } else {
+        rejections.sort_by(|a, b| a.total_cmp(b));
+        let rejections = rejections
+            .into_iter()
+            .skip(allowed_failures)
+            .map(|p_value| Rejection { alpha: significance_level, p_value })
+            .collect();
         Err(rejections)
     }
 }
