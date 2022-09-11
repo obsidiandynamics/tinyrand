@@ -43,3 +43,4 @@ jobs:
           toolchain: stable
       - run: cargo install cargo-criterion
       - run: cargo criterion --bench cri_rand -- next_u64
+      - run: cargo criterion --bench cri_rand -- next_u128

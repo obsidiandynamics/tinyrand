@@ -1,5 +1,5 @@
 //! Conducts a series of trials on a [`Rand`] with a different (randomly chosen)
-//! integer generation range on each trial. Within each trialed range, one random number
+//! integer generation range on each trial. Within each trialled range, one random number
 //! is chosen as the control value. A series of random numbers (sampled from the same range) is
 //! then produced and the number of collisions with the control value is counted. By H0, the collisions
 //! should follow a Poisson process with λ as the expected collision rate.

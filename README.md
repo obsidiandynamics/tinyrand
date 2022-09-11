@@ -14,7 +14,7 @@ Lightweight RNG specification and several ultrafast implementations in Rust. `ti
 * It comes with [`Mock`](https://docs.rs/tinyrand-alloc/latest/tinyrand_alloc/mock/index.html) for testing code that depends on random numbers. That is, if you care about code coverage.
 
 # Performance
-Below is a comparison of several notable RNGs.
+Below is a comparison of several notable PRNGs.
 
 | RNG        | Algorithm | Bandwidth (GB/s) |                                                                                       |
 |:-----------|:----------|-----------------:|:--------------------------------------------------------------------------------------|
@@ -308,6 +308,64 @@ let day = &DAYS[rand.next_range(0..DAYS.len())];
 assert!(matches!(day, Day::Sun)); // always a Sunday
 assert!(matches!(day, Day::Sun)); // yes!!!
 ```
+
+# How is `tinyrand` tested?
+This section briefly describes the `tinyrand` testing approach. It is aimed at those who —
+
+* Want to know whether they are getting "the real deal";
+* Wish to understand how PRNGs can be practically tested; and
+* Are wondering what it is meant by "likely fit for use in most applications".
+
+The `tinyrand` testing process is split into four tiers:
+
+1. Unit tests are used to ensure 100% code coverage and assert the elemental sanity of `tinyrand`. In other words, every line of code is exercised at least once, fundamental expectations are upheld and there are _likely_ no trivial defects.
+2. Synthetic benchmarks.
+3. Statistical tests are then used to verify specific properties of the PRNGs that make up `tinyrand`. These are formal hypothesis tests that assume that the source is random (the null hypothesis), and look for evidence to dispel this assumption (the alternate hypothesis).
+4. The [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) statistical test suite.
+
+## Unit tests
+The unit tests are not aimed at asserting numerical qualities; they are purely functional in nature. Objectives include —
+
+* **Coverage testing.** `tinyrand` is built on the philosophy that if a line of code is not provably exercised, it should be removed. There are no exceptions to this rule.
+* **Seeding and state management.** Every PRNG must be able to maintain state between invocations and some can be initialised from a user-supplied seed. Tests exist to verify this.
+* **Domain transforms.** A PRNG, at minimum, generates uniformly distributed values in some _a priori_ range. In practice, we need random numbers in some specific range that is useful to our application. Also, we may stipulate that some values appear more frequently than others; for example, the weighting of the `true` outcome versus `false` in the generation of `bool`s. The functions for mapping from the uniform distribution to a custom one are nontrivial and require a debiasing layer. `tinyrand` uses different debiasing methods depending on the word width. The purpose of the domain transform tests is to verify that this functionality is working as expected and rejection sampling is taking place. It doesn't verify the numerical properties of debiasing, however.
+
+## Synthetic benchmarks
+The synthetic benchmarks are used to exercise the hot paths of the `tinyrand` PRNGs, comparing the results to peer libraries. The benchmarks test the generation of numbers at various word lengths, transforms/debiasing and the generation of weighted `bool`s. A subset of these benchmarks is also included in the CI tests, making it a little easier to compare the performance of `tinyrand` across commit versions.
+
+## Statistical hypothesis testing
+`tinyrand` comes bundled with an integrated statistical testing suite, inspired by the likes of [Diehard](https://en.wikipedia.org/wiki/Diehard_tests), [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) and [NIST SP 800-22](https://csrc.nist.gov/publications/detail/sp/800-22/rev-1a/final). The `tinyrand` suite is admittedly much smaller than any of these tests; the intention is not to replicate the already substantial and readily accessible work in this area, but to create a safety net that is both very effective at detecting common anomalies and fast enough to be run at every commit.
+
+The following tests are included.
+
+* **Bit flip**: Conducts a series of Bernoulli trials on a `Rand` instance by masking the value of a single bit, verifying that the number of times the bit is set to 1 is within the expected range. For each subsequent trial, the mask is shifted by one to the left and the hypothesis is retested. The test proceeds over several cycles; each cycle comprising 64 Bernoulli trials (one for each bit of a `u64`).
+* **Coin flip**: Whereas _bit flip_ works at the level of individual bits in a random word and is unweighted (or equally weighted), _coin flip_ uses the Bernoulli distribution to obtain a `bool` with a chosen probability from a 64-bit unsigned word. The test comprises a series of Bernoulli trials with a different (randomly chosen) weighting on each trial, simulating a run of coin flips. Within each trial, H0 asserts that the source is random. (I.e., the number of 'heads' falls within a statistically acceptable interval.)
+* **Collision**: A series of trials with a different (randomly chosen) integer generation range on each trial. Within each trialled range, one random number is chosen as the control value. A series of random numbers (sampled from the same range) is then produced and the number of collisions with the control value is counted. By H0, the collisions should follow a Poisson process with λ as the expected collision rate.
+* **Monobit**: Counts the number of bits in 32-bit words, taken by alternating between the MSB and LSB segments of generated `u64`s in separate trials. In each trial, we assume that the values of individual bits are IID with probability of 0.5, verifying that the number of times the bit is set to 1 is within the expected range. For a random source, the number of 1s (and 0s) follows a Bernoulli process.
+* **Sum convergence**: A series of trials with a different (randomly chosen) integer generation range on each trial. Within each trial, H0 asserts that the source is random. (I.e., the sum of the sampled values falls within a statistically acceptable range.) The Gaussian distribution is used as an [approximation of the Irwin-Hall distribution](https://en.wikipedia.org/wiki/Irwin%E2%80%93Hall_distribution#Approximating_a_Normal_distribution), with the unscaled mean and variance parameters set to _n_/2 and _n_/12 respectively.
+
+Each of `tinyrand`'s tests is exercised not only against its own PRNGs, but also against intentionally faulty implementations, which are used to verify the efficacy of the test. The tests must consistently fail to reject H0 for the correct PRNGs and accept H1 for the faulty ones.
+
+The statistical tests are themselves seeded from random values. Randomness is used to seed the PRNGs under test (every trial is independently seeded), assign weightings to Bernoulli experiments, select integer ranges for testing transform functions and debiasing, control values for testing collisions, and so forth. We use the `rand` package as the control PRNG so that a defect in `tinyrand` cannot inadvertently subvert a test in a way that masks itself. Tests are seeded so that, while they appear to be on a random excursion through the parameter space, their choice of parameters is entirely deterministic and hence repeatable. This is essential due to the possibility of Type I error (incorrectly rejecting the null hypothesis), which mustn't be allowed to occur intermittently, especially in CI environments. In other words, _testing of randomness cannot be left to chance_.
+
+One way of testing the randomness hypothesis is to select a set of parameters (e.g., the integer generation range `M`..`N` or the probability of obtaining `true` from a Bernoulli distribution) and to perform a long run, seeking anomalies in a large random sample. The rationale is that the larger the sample, the more likely it will contain a detectable anomaly. This is generally not very effective for spotting certain kinds of anomalies that may affect PRNGs only under very specific conditions. For example, a poorly written debiasing function may still perform well for most small integer ranges and even some large ones (those that are close to powers of two). If the test picks parameters unfavourably, it may not find anomalies no matter how exhaustively it tests those parameters. 
+
+A much better way of testing PRNG is to introduce diversity into the testing regime — conducting a large number of small trials with different parameters rather than one, very large trial. This is precisely what the `tinyrand` statistical tests do — conduct several trials with randomly (but deterministically) selected parameters. This immediately exposes the [multiple comparisons problem](https://en.wikipedia.org/wiki/Multiple_comparisons_problem). Consider an _a priori_ ideal PRNG. It will frequently generate numbers that will appear "random" according to some agreed measure. But occasionally it will produce output that will appear nonrandom by the same measure. Even an ideal source will produce a very long run of ones or zeros, for example. In fact, failing to do so occasionally would also render it nonrandom. Unfortunately, this will produce a p-value that will fail even the most relaxed test... at some point. This is a problem for single hypothesis testing, but it is proportionally exacerbated in multiple hypothesis testing.
+
+The `tinyrand` built-in tests address this problem using classical Bonferroni correction. Bonferroni correction has excellent Type I error avoidance properties at the expense of (greatly) reduced statistical power — admission of Type II errors. It nonetheless appears to perform very well for `tinyrand`'s needs, as long as the number of trials is kept to under 100 or so. (With more trials, there is a risk that the local α parameter may shrink to a point where it fails to reject H0 for all but the most anomalous of samples.) Bonferroni works reasonably well because `tinyrand` tests are designed to be very quick, which places a practical bound on the number of trials — ideally, all statistical tests should complete within a few seconds for them to be mandated as part of routine development flow.
+
+## Dieharder tests
+[Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) test suite extends Marsaglia's original [Diehard](https://en.wikipedia.org/wiki/Diehard_tests) battery of tests. It is bundled with a large number of tests and takes a long time (~1 hour) to complete. `tinyrand` has a utility for pumping random output to Dieharder, which is typically run on an ad hoc basis. The Dieharder battery should be run when a PRNG undergoes a material change, which is rare — once a PRNG algorithm is implemented, it generally remains untouched unless it is either refactored or some defect is found. Dieharder is arguably more useful for building and testing experimental PRNGs with `tinyrand`. The other three tiers of tests are sufficient for the maintenance of the `tinyrand` package.
+
+To run `tinyrand` against Dieharder:
+
+```sh
+cargo run --release --bin random -- wyrand 42 binary 1T | dieharder -g 200 -a
+```
+
+The above command uses the Wyrand PRNG, seeded with the number 42, generating binary output over 1 trillion 64-bit words. It's `stdout` is pumped to `dieharder`. (In practice, Dieharder will consume under 31 billion numbers.)
+
+A word of caution: Dieharder does not have a mechanism for dealing with Type I errors in multiple hypothesis testing — partially because the tests differ in type, not just in parameters. Dieharder limits hypothesis testing to the scope of an individual test; there is no overarching hypothesis which classifies a PRNG as either fit or unfit based on the number of passed tests, or otherwise adjusts the confidence level to account for Type I errors.
 
 # Credits
 * G. Marsaglia for [Xorshift](https://en.wikipedia.org/wiki/Xorshift).

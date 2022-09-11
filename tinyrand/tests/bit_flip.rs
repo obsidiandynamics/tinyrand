@@ -1,6 +1,6 @@
 //! Conducts a series of Bernoulli trials on a [`Rand`] by masking the value of a single bit,
 //! verifying that the number of times the bit is set to 1 is within the expected range. For
-//! each subsequent trial, the mask is shifted one to the left and the hypothesis is retested.
+//! each subsequent trial, the mask is shifted by one to the left and the hypothesis is retested.
 pub mod stats;
 
 use crate::stats::{bonferroni_correction, integrate_binomial, Rejection};
@@ -73,7 +73,7 @@ impl Options {
 impl Default for Options {
     fn default() -> Self {
         Self {
-            cycles: 2,
+            cycles: 10,
             iters: 30,
             significance_level: 0.25,
         }
