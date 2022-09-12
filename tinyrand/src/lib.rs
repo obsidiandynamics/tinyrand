@@ -6,10 +6,12 @@
 pub mod counter;
 pub mod duration;
 pub mod mock_support;
+pub mod splitmix;
 pub mod xorshift;
 pub mod wyrand;
 
 pub use counter::Counter;
+pub use splitmix::SplitMix;
 pub use wyrand::Wyrand;
 pub use xorshift::Xorshift;
 pub use mock_support::RefCellExt;

@@ -1,26 +1,26 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use rand::{Rng, RngCore, thread_rng};
-use tinyrand::{Probability, Rand, RandRange, Wyrand, Xorshift};
+use tinyrand::{Probability, Rand, RandRange, SplitMix, Wyrand, Xorshift};
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut rand = Xorshift::default();
-    c.bench_function("xorshift/next_u64", |b| {
+    let mut rand = SplitMix::default();
+    c.bench_function("splitmix/next_u64", |b| {
         b.iter(|| rand.next_u64());
     });
-    c.bench_function("xorshift/next_u128", |b| {
+    c.bench_function("splitmix/next_u128", |b| {
         b.iter(|| rand.next_u128());
     });
-    c.bench_function("xorshift/next_range<u64>", |b| {
+    c.bench_function("splitmix/next_range<u64>", |b| {
         b.iter(|| rand.next_range(0..17u64));
     });
-    c.bench_function("xorshift/next_range<u128>/small", |b| {
+    c.bench_function("splitmix/next_range<u128>/small", |b| {
         b.iter(|| rand.next_range(0..17u128));
     });
-    c.bench_function("xorshift/next_range<u128>/large", |b| {
+    c.bench_function("splitmix/next_range<u128>/large", |b| {
         b.iter(|| rand.next_range(0..1u128 << 80));
     });
     let p = Probability::new(0.5);
-    c.bench_function("xorshift/next_bool", |b| {
+    c.bench_function("splitmix/next_bool", |b| {
         b.iter(|| rand.next_bool(p));
     });
 
@@ -42,6 +42,27 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
     let p = Probability::new(0.5);
     c.bench_function("wyrand/next_bool", |b| {
+        b.iter(|| rand.next_bool(p));
+    });
+    
+    let mut rand = Xorshift::default();
+    c.bench_function("xorshift/next_u64", |b| {
+        b.iter(|| rand.next_u64());
+    });
+    c.bench_function("xorshift/next_u128", |b| {
+        b.iter(|| rand.next_u128());
+    });
+    c.bench_function("xorshift/next_range<u64>", |b| {
+        b.iter(|| rand.next_range(0..17u64));
+    });
+    c.bench_function("xorshift/next_range<u128>/small", |b| {
+        b.iter(|| rand.next_range(0..17u128));
+    });
+    c.bench_function("xorshift/next_range<u128>/large", |b| {
+        b.iter(|| rand.next_range(0..1u128 << 80));
+    });
+    let p = Probability::new(0.5);
+    c.bench_function("xorshift/next_bool", |b| {
         b.iter(|| rand.next_bool(p));
     });
 

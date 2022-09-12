@@ -7,7 +7,12 @@ pub mod stats;
 use crate::stats::{holm_bonferroni_seq_correction, integrate_binomial, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use tinyrand::{Counter, Rand, RandRange, Seeded, Wyrand, Xorshift};
+use tinyrand::{Counter, Rand, RandRange, Seeded, SplitMix, Wyrand, Xorshift};
+
+#[test]
+fn bit_flip_splitmix() {
+    bit_flip::<SplitMix>(Options::default()).unwrap();
+}
 
 #[test]
 fn bit_flip_wyrand() {
@@ -76,7 +81,7 @@ impl Default for Options {
         Self {
             cycles: 10,
             iters: 30,
-            significance_level: 0.25,
+            significance_level: 0.2,
         }
     }
 }

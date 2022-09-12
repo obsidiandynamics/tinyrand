@@ -9,8 +9,13 @@ pub mod stats;
 use rand::rngs::StdRng;
 use rand::{Rng, RngCore, SeedableRng};
 use std::ops::Range;
-use tinyrand::{Counter, RandRange, Seeded, Wyrand, Xorshift};
+use tinyrand::{Counter, RandRange, Seeded, SplitMix, Wyrand, Xorshift};
 use crate::stats::{holm_bonferroni_seq_correction, integrate_poisson, Rejection};
+
+#[test]
+fn collision_splitmix() {
+    collision::<SplitMix>(Options::default()).unwrap();
+}
 
 #[test]
 fn collision_wyrand() {

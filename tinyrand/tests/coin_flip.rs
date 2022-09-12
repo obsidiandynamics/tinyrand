@@ -8,7 +8,12 @@ pub mod stats;
 use crate::stats::{holm_bonferroni_seq_correction, integrate_binomial, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use tinyrand::{Counter, Probability, Rand, RandRange, Seeded, Wyrand, Xorshift};
+use tinyrand::{Counter, Probability, Rand, RandRange, Seeded, SplitMix, Wyrand, Xorshift};
+
+#[test]
+fn coin_flip_splitmix() {
+    coin_flip::<SplitMix>(Options::default()).unwrap();
+}
 
 #[test]
 fn coin_flip_wyrand() {

@@ -10,7 +10,12 @@ pub mod stats;
 use crate::stats::{holm_bonferroni_seq_correction, integrate_binomial, Rejection};
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use tinyrand::{Counter, Rand, RandRange, Seeded, Wyrand, Xorshift};
+use tinyrand::{Counter, Rand, RandRange, Seeded, SplitMix, Wyrand, Xorshift};
+
+#[test]
+fn monobit_splitmix() {
+    monobit::<SplitMix>(Options::default()).unwrap();
+}
 
 #[test]
 fn monobit_wyrand() {

@@ -3,7 +3,7 @@ use std::io::{stdout, ErrorKind, Write, BufWriter};
 use std::process::exit;
 use std::str::FromStr;
 use std::{env, io};
-use tinyrand::{Counter, Rand, Seeded, Wyrand, Xorshift};
+use tinyrand::{Counter, Rand, Seeded, SplitMix, Wyrand, Xorshift};
 use tinyrand_std::ClockSeed;
 
 fn main() {
@@ -19,9 +19,10 @@ fn main() {
 }
 
 enum Generator {
-    Xorshift,
-    Wyrand,
     Counter,
+    SplitMix,
+    Wyrand,
+    Xorshift,
 }
 
 impl FromStr for Generator {
@@ -29,9 +30,10 @@ impl FromStr for Generator {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "xorshift" => Ok(Self::Xorshift),
-            "wyrand" => Ok(Self::Wyrand),
             "counter" => Ok(Self::Counter),
+            "splitmix" => Ok(Self::SplitMix),
+            "wyrand" => Ok(Self::Wyrand),
+            "xorshift" => Ok(Self::Xorshift),
             _ => Err(format!("unknown generator '{}'", s)),
         }
     }
@@ -78,9 +80,10 @@ fn generate() -> Result<u64, Box<dyn Error>> {
     let count = u64::from_str(&count)?;
 
     let rand: Box<dyn Rand> = match generator {
-        Generator::Xorshift => Box::new(Xorshift::seed(seed)),
-        Generator::Wyrand => Box::new(Wyrand::seed(seed)),
         Generator::Counter => Box::new(Counter::seed(seed)),
+        Generator::SplitMix => Box::new(SplitMix::seed(seed)),
+        Generator::Wyrand => Box::new(Wyrand::seed(seed)),
+        Generator::Xorshift => Box::new(Xorshift::seed(seed)),
     };
 
     match format {

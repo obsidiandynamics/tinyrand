@@ -12,8 +12,28 @@ use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use std::ops::Range;
 use statrs::distribution::ContinuousCDF;
-use tinyrand::{Counter, RandRange, Seeded, Wyrand, Xorshift};
+use tinyrand::{Counter, RandRange, Seeded, SplitMix, Wyrand, Xorshift};
 use crate::stats::{holm_bonferroni_seq_correction, Rejection};
+
+#[test]
+fn sum_convergence_splitmix() {
+    sum_convergence::<SplitMix>(0, Options::default()).unwrap();
+}
+
+#[test]
+fn sum_convergence_splitmix_lag_1() {
+    sum_convergence::<SplitMix>(1, Options::default()).unwrap();
+}
+
+#[test]
+fn sum_convergence_splitmix_lag_2() {
+    sum_convergence::<SplitMix>(2, Options::default()).unwrap();
+}
+
+#[test]
+fn sum_convergence_splitmix_lag_4() {
+    sum_convergence::<SplitMix>(4, Options::default()).unwrap();
+}
 
 #[test]
 fn sum_convergence_wyrand() {
