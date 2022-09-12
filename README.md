@@ -16,7 +16,7 @@ Lightweight RNG specification and several ultrafast implementations in Rust. `ti
 # Performance
 Below is a comparison of several notable PRNGs.
 
-| RNG        | Algorithm | Bandwidth (GB/s) |                                                                                       |
+| PRNG       | Algorithm | Bandwidth (GB/s) |                                                                                       |
 |:-----------|:----------|-----------------:|:--------------------------------------------------------------------------------------|
 | `rand`     | ChaCha12  |              2.4 | <img src="https://via.placeholder.com/12/FF5733/FF5733.png" width="24" height="12"/>  |
 | `tinyrand` | SplitMix  |              6.5 | <img src="https://via.placeholder.com/12/33FFE0/33FFE0.png" width="65" height="12"/>  |
