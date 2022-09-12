@@ -59,7 +59,7 @@ impl FromStr for OutputFormat {
 fn generate() -> Result<u64, Box<dyn Error>> {
     let args: Vec<_> = env::args().collect();
     if args.len() != 5 {
-        Err("usage: {} <generator ∈ {{xorshift, wyrand, counter}}> <seed ∈ {{clock}} ∪ ℕ> <format ∈ {{text, binary}}> <count ∈ ℕ⁺>")?;
+        Err("usage: {} <generator ∈ {xorshift, wyrand, counter}> <seed ∈ {clock} ∪ ℕ> <format ∈ {text, binary}> <count ∈ ℕ⁺>")?;
     }
 
     let generator = Generator::from_str(&args[1])?;

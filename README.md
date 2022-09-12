@@ -9,7 +9,7 @@ Lightweight RNG specification and several ultrafast implementations in Rust. `ti
 
 # Why `tinyrand`?
 * It's very small and doesn't need `std`, meaning it's embeddable — it runs on microcontrollers and bare-metal (no OS) environments.
-* It's very fast. It comes bundled with [Xorshift](https://en.wikipedia.org/wiki/Xorshift) and [Wyrand](https://github.com/wangyi-fudan/wyhash/blob/master/Modern%20Non-Cryptographic%20Hash%20Function%20and%20Pseudorandom%20Number%20Generator.pdf).
+* It's very fast. It comes bundled with [Xorshift](https://en.wikipedia.org/wiki/Xorshift), [SplitMix](https://dl.acm.org/doi/10.1145/2660193.2660195) and [Wyrand](https://github.com/wangyi-fudan/wyhash/blob/master/Modern%20Non-Cryptographic%20Hash%20Function%20and%20Pseudorandom%20Number%20Generator.pdf).
 * The RNG behaviour is concisely specified as a handful of traits, independent of the underlying implementations. It makes it easy to swap implementations.
 * It comes with [`Mock`](https://docs.rs/tinyrand-alloc/latest/tinyrand_alloc/mock/index.html) for testing code that depends on random numbers. That is, if you care about code coverage.
 
@@ -19,6 +19,7 @@ Below is a comparison of several notable PRNGs.
 | RNG        | Algorithm | Bandwidth (GB/s) |                                                                                       |
 |:-----------|:----------|-----------------:|:--------------------------------------------------------------------------------------|
 | `rand`     | ChaCha12  |              2.4 | <img src="https://via.placeholder.com/12/FF5733/FF5733.png" width="24" height="12"/>  |
+| `tinyrand` | SplitMix  |              6.5 | <img src="https://via.placeholder.com/12/33FFE0/33FFE0.png" width="65" height="12"/>  |
 | `tinyrand` | Xorshift  |              6.7 | <img src="https://via.placeholder.com/12/33FFE0/33FFE0.png" width="67" height="12"/>  |
 | `fastrand` | Wyrand    |              7.5 | <img src="https://via.placeholder.com/12/FFC733/FFC733.png" width="75" height="12"/>  |
 | `tinyrand` | Wyrand    |             14.6 | <img src="https://via.placeholder.com/12/33FFE0/33FFE0.png" width="146" height="12"/> |
@@ -26,7 +27,7 @@ Below is a comparison of several notable PRNGs.
 TL;DR: `tinyrand` is 2x faster than `fastrand` and 6x faster than `rand`.
 
 # Statistical properties
-It's impossible to tell for certain whether a certain PRNG is good; the answer is probabilistic. Both the Wyrand and Xorshift algorithms stand up well against the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) barrage of tests. (Tested on 30.8 billion samples.) This means `tinyrand` produces numbers that appear sufficiently random and is likely fit for use in most applications.
+It's impossible to tell for certain whether a certain PRNG is good; the answer is probabilistic. All three algorithms stand up well against the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) barrage of tests, but Wyrand and SplitMix are a little better than Xorshift. (Tested on 30.8 billion samples.) This means `tinyrand` produces numbers that appear sufficiently random and is likely fit for use in most applications.
 
 `tinyrand` algorithms are not cryptographically secure, meaning it is possible to guess the next random number by observing a sequence of numbers. (Or the preceding numbers, for that matter.) If you need a robust CSPRNG, it is strongly suggested that you go with `rand`. CSPRNGs are generally a lot slower and most folks don't need one.
 
