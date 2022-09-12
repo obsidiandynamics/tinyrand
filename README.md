@@ -372,5 +372,6 @@ A word of caution: Dieharder does not have a mechanism for dealing with Type I e
 # Credits
 * G. Marsaglia for [Xorshift](https://en.wikipedia.org/wiki/Xorshift).
 * Y. Wang, D. B. Romero, D. Lemire and L. Jin for [Wyrand](https://github.com/wangyi-fudan/wyhash/blob/master/Modern%20Non-Cryptographic%20Hash%20Function%20and%20Pseudorandom%20Number%20Generator.pdf).
+* G. L. Steele, D. Lea and C. H. Flood for [SplitMix](https://dl.acm.org/doi/10.1145/2660193.2660195).
 * R. G. Brown for the [Dieharder](http://webhome.phy.duke.edu/~rgb/General/dieharder.php) test suite.
 * D. Lemire for his work on [Fast Random Integer Generation in an Interval](https://arxiv.org/abs/1805.10941).
