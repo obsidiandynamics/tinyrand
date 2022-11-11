@@ -315,7 +315,7 @@ This section briefly describes the `tinyrand` testing approach. It is aimed at t
 
 * Want to know whether they are getting "the real deal";
 * Wish to understand how PRNGs can be practically tested; and
-* Are wondering what it is meant by "likely fit for use in most applications".
+* Are wondering what is meant by "likely fit for use in most applications".
 
 The `tinyrand` testing process is split into four tiers:
 
