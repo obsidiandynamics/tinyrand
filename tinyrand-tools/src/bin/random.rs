@@ -12,7 +12,7 @@ fn main() {
             eprintln!("{samples} samples emitted");
         }
         Err(err) => {
-            eprintln!("{}", err);
+            eprintln!("{err}");
             exit(1);
         }
     }
@@ -34,7 +34,7 @@ impl FromStr for Generator {
             "splitmix" => Ok(Self::SplitMix),
             "wyrand" => Ok(Self::Wyrand),
             "xorshift" => Ok(Self::Xorshift),
-            _ => Err(format!("unknown generator '{}'", s)),
+            _ => Err(format!("unknown generator '{s}'")),
         }
     }
 }
@@ -51,7 +51,7 @@ impl FromStr for OutputFormat {
         match s {
             "text" => Ok(Self::Text),
             "binary" => Ok(Self::Binary),
-            _ => Err(format!("unknown output format '{}'", s)),
+            _ => Err(format!("unknown output format '{s}'")),
         }
     }
 }
@@ -98,7 +98,7 @@ fn generate_text(
     mut rand: Box<dyn Rand>,
 ) -> Result<u64, Box<dyn Error>> {
     println!("#==================================================================");
-    println!("# generator {}", rand_name);
+    println!("# generator {rand_name}");
     println!("#==================================================================");
     println!("type: d");
     println!("count: {count}");
